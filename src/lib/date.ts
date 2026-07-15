@@ -19,3 +19,7 @@ export function toUtcDateOnly(isoDateString: string): Date {
 export function toIsoDateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
+
+export function daysAgo(days: number): Date {
+  return new Date(Date.now() - days * 86_400_000);
+}
