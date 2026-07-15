@@ -112,6 +112,18 @@ step needed.
 Everything else (Strava sync, training plan generation, etc.) runs as regular
 Next.js server code — no separate worker or cron service required.
 
+### Troubleshooting: build fails with "Can't resolve '@/generated/prisma/...'"
+
+The Prisma client is generated at install time (`postinstall`) and is not
+committed to git, so this means the deployment is building an **old commit**
+from before that was set up. This commonly happens because clicking
+**Redeploy** on an existing Vercel deployment re-runs that exact deployment's
+pinned commit — it does not pull the latest commit from the branch. To build
+the current commit, either push a new commit (Vercel's GitHub webhook
+auto-deploys it) or start a brand new deployment from the branch rather than
+redeploying an old one. Check the commit hash in the build log against
+`git log` on your branch to confirm which one is actually being built.
+
 ## Project structure
 
 - `src/app/(auth)` — login.
