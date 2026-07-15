@@ -80,9 +80,37 @@ connect Strava from **Settings**.
 
 The app is a standard Next.js app with a Postgres dependency, so it deploys to
 Vercel + a hosted Postgres (Neon/Supabase), a Docker container, or any Node
-host. Run `prisma migrate deploy` and `prisma db seed` as part of your deploy
-step, and set the same environment variables as above (using your production
-URL for `NEXTAUTH_URL` and `STRAVA_REDIRECT_URI`).
+host. `npm run build` already runs `prisma migrate deploy` before `next build`,
+and `postinstall` runs `prisma generate`, so a plain Vercel deploy applies
+pending migrations and regenerates the client automatically — no extra build
+step needed.
+
+### Deploying to Vercel
+
+1. Create a Postgres database reachable from the internet (e.g.
+   [Neon](https://neon.tech) or [Supabase](https://supabase.com) — both have
+   free tiers). If your provider offers a **pooled** connection string (Neon's
+   has `-pooler` in the hostname), use that for `DATABASE_URL` — Vercel's
+   serverless functions open many short-lived connections, and a small
+   Postgres plan runs out of connection slots quickly without pooling.
+2. Import the repo into Vercel and set these environment variables in the
+   project settings (same ones as `.env.example`):
+   `DATABASE_URL`, `NEXTAUTH_URL` (your Vercel production URL, e.g.
+   `https://your-app.vercel.app`), `NEXTAUTH_SECRET`, `TOKEN_ENCRYPTION_KEY`,
+   `SEED_USER_EMAIL`, `SEED_USER_PASSWORD`, `SEED_USER_NAME`,
+   `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_REDIRECT_URI`
+   (`https://your-app.vercel.app/api/strava/callback`).
+3. Deploy. The build applies migrations automatically (step above).
+4. Seed your account once — run locally with the production `DATABASE_URL`:
+   ```bash
+   DATABASE_URL="<your production connection string>" npx prisma db seed
+   ```
+5. Update your Strava API app's **Authorization Callback Domain** (at
+   <https://www.strava.com/settings/api>) to your production domain — it can't
+   stay `localhost` once you're live.
+
+Everything else (Strava sync, training plan generation, etc.) runs as regular
+Next.js server code — no separate worker or cron service required.
 
 ## Project structure
 
