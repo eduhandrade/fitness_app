@@ -15,6 +15,8 @@ export type SessionRowData = {
   completed: boolean;
 };
 
+export type SessionWithDate = SessionRowData & { date: Date };
+
 export function SessionRow({ session }: { session: SessionRowData }) {
   const [isPending, startTransition] = useTransition();
   const meta = SPORT_META[session.sport];

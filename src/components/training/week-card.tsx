@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatUtcDate } from "@/lib/date";
-import { SessionRow, type SessionRowData } from "./session-row";
+import { SessionRow, type SessionWithDate } from "./session-row";
 
 const PHASE_LABEL: Record<string, string> = {
   BASE: "Base",
@@ -16,10 +16,11 @@ export type WeekCardData = {
   phase: string;
   startDate: Date;
   targetVolumeMin: number;
-  sessions: (SessionRowData & { date: Date })[];
+  isCurrent: boolean;
+  sessions: SessionWithDate[];
 };
 
-export function WeekCard({ week, defaultOpen }: { week: WeekCardData; defaultOpen: boolean }) {
+export function WeekCard({ week }: { week: WeekCardData }) {
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date(week.startDate.getTime() + i * 86_400_000);
     const sessions = week.sessions.filter(
@@ -30,7 +31,7 @@ export function WeekCard({ week, defaultOpen }: { week: WeekCardData; defaultOpe
 
   return (
     <Card>
-      <details open={defaultOpen}>
+      <details open={week.isCurrent}>
         <summary className="cursor-pointer list-none">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>

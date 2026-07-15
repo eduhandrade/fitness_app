@@ -3,7 +3,7 @@ import { requireUserId } from "@/lib/session";
 import { daysAgo } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanWizard } from "@/components/training/plan-wizard";
-import { WeekCard } from "@/components/training/week-card";
+import { PlanScheduleView } from "@/components/training/plan-schedule-view";
 
 const LEVEL_LABEL: Record<string, string> = {
   BEGINNER: "Beginner",
@@ -59,35 +59,29 @@ export default async function TrainingPlanPage() {
             </CardContent>
           </Card>
 
-          <div className="space-y-3">
-            {plan.weeks.map((week) => {
+          <PlanScheduleView
+            weeks={plan.weeks.map((week) => {
               const weekEnd = new Date(week.startDate.getTime() + 7 * 86_400_000);
-              const isCurrent = now >= week.startDate && now < weekEnd;
-              return (
-                <WeekCard
-                  key={week.id}
-                  defaultOpen={isCurrent}
-                  week={{
-                    id: week.id,
-                    weekNumber: week.weekNumber,
-                    phase: week.phase,
-                    startDate: week.startDate,
-                    targetVolumeMin: week.targetVolumeMin,
-                    sessions: week.sessions.map((s) => ({
-                      id: s.id,
-                      date: s.date,
-                      sport: s.sport,
-                      sessionType: s.sessionType,
-                      durationMin: s.durationMin,
-                      targetIntensity: s.targetIntensity,
-                      description: s.description,
-                      completed: s.completed,
-                    })),
-                  }}
-                />
-              );
+              return {
+                id: week.id,
+                weekNumber: week.weekNumber,
+                phase: week.phase,
+                startDate: week.startDate,
+                targetVolumeMin: week.targetVolumeMin,
+                isCurrent: now >= week.startDate && now < weekEnd,
+                sessions: week.sessions.map((s) => ({
+                  id: s.id,
+                  date: s.date,
+                  sport: s.sport,
+                  sessionType: s.sessionType,
+                  durationMin: s.durationMin,
+                  targetIntensity: s.targetIntensity,
+                  description: s.description,
+                  completed: s.completed,
+                })),
+              };
             })}
-          </div>
+          />
 
           <Card>
             <details>
