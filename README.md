@@ -5,9 +5,15 @@ Strava, tracks body weight and gym workouts, visualizes progress across swim,
 bike, run, and strength, and generates rule-based training plans based on your
 level, race goal, and available training time.
 
-Built with Next.js (App Router) + TypeScript, Tailwind CSS, Prisma + PostgreSQL,
-and NextAuth for a single-user login. Add it to your phone's home screen — it's
-a PWA.
+Built with Next.js (App Router) + TypeScript, Tailwind CSS, and Prisma +
+PostgreSQL. Add it to your phone's home screen — it's a PWA.
+
+> **No login.** This is a single-user app with no authentication — anyone with
+> the URL can see and change everything (body weight, training plans, Strava
+> connection). That's a deliberate tradeoff for personal convenience, made at
+> the owner's request. Don't deploy this publicly if that's not an acceptable
+> risk for your data — put it behind Vercel's password protection, a VPN, or
+> similar if you want a barrier back.
 
 ## Features
 
@@ -39,10 +45,10 @@ cp .env.example .env
 Fill in:
 
 - `DATABASE_URL` — your Postgres connection string.
-- `NEXTAUTH_URL` / `NEXTAUTH_SECRET` — the app's base URL and a random secret
-  (`openssl rand -base64 32`).
-- `SEED_USER_EMAIL` / `SEED_USER_PASSWORD` / `SEED_USER_NAME` — the single
-  account this app is for. Used by the seed script below.
+- `SEED_USER_EMAIL` / `SEED_USER_PASSWORD` / `SEED_USER_NAME` — identify the
+  single account this app is for (there's no login, so the password isn't
+  checked anywhere — it's just a required field on the account record). Used
+  by the seed script below.
 - `TOKEN_ENCRYPTION_KEY` — a 32-byte hex key (`openssl rand -hex 32`) used to
   encrypt your Strava tokens at rest.
 - `STRAVA_CLIENT_ID` / `STRAVA_CLIENT_SECRET` / `STRAVA_REDIRECT_URI` — see below.
@@ -64,7 +70,7 @@ someone else's credentials):
 ```bash
 npm install
 npx prisma migrate deploy   # or `prisma migrate dev` in development
-npx prisma db seed          # creates your single user account
+npx prisma db seed          # creates your single account record
 ```
 
 ### 5. Run
@@ -73,8 +79,8 @@ npx prisma db seed          # creates your single user account
 npm run dev
 ```
 
-Open the app and sign in with `SEED_USER_EMAIL` / `SEED_USER_PASSWORD`, then
-connect Strava from **Settings**.
+Open the app — it goes straight to the dashboard, no login — and connect
+Strava from **Settings**.
 
 ## Deploying
 
@@ -95,11 +101,12 @@ step needed.
    Postgres plan runs out of connection slots quickly without pooling.
 2. Import the repo into Vercel and set these environment variables in the
    project settings (same ones as `.env.example`):
-   `DATABASE_URL`, `NEXTAUTH_URL` (your Vercel production URL, e.g.
-   `https://your-app.vercel.app`), `NEXTAUTH_SECRET`, `TOKEN_ENCRYPTION_KEY`,
-   `SEED_USER_EMAIL`, `SEED_USER_PASSWORD`, `SEED_USER_NAME`,
-   `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_REDIRECT_URI`
-   (`https://your-app.vercel.app/api/strava/callback`).
+   `DATABASE_URL`, `TOKEN_ENCRYPTION_KEY`, `SEED_USER_EMAIL`,
+   `SEED_USER_PASSWORD`, `SEED_USER_NAME`, `STRAVA_CLIENT_ID`,
+   `STRAVA_CLIENT_SECRET`, `STRAVA_REDIRECT_URI`
+   (`https://your-actual-vercel-url.vercel.app/api/strava/callback` — use
+   your project's real generated domain, found under **Domains** in the
+   Vercel dashboard, not a placeholder).
 3. Deploy. The build applies migrations automatically (step above).
 4. Seed your account once — run locally with the production `DATABASE_URL`:
    ```bash
@@ -126,10 +133,10 @@ redeploying an old one. Check the commit hash in the build log against
 
 ## Project structure
 
-- `src/app/(auth)` — login.
-- `src/app/(app)` — the authenticated app shell (bottom nav on mobile, top nav
-  on desktop) and its pages: dashboard, body, training-plan, gym, progress,
-  activities, settings.
+- `src/app/(app)` — the app shell (bottom nav on mobile, top nav on desktop)
+  and its pages: dashboard, body, training-plan, gym, progress, activities,
+  settings. No auth gate — every request is treated as the single seeded
+  account (`src/lib/session.ts`).
 - `src/app/api/strava` — Strava OAuth connect/callback + activity sync.
 - `src/lib/training` — the training plan generator (periodization, weekly
   session allocation, session descriptions).

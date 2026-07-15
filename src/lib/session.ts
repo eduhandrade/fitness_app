@@ -1,9 +1,10 @@
-import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
+/**
+ * This is a single-user app with no login — every request acts as the one
+ * seeded account (see prisma/seed.ts).
+ */
 export async function requireUserId(): Promise<string> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new Error("Not authenticated");
-  }
-  return session.user.id;
+  const user = await prisma.user.findFirstOrThrow();
+  return user.id;
 }

@@ -5,7 +5,6 @@ import { formatUtcDate, toIsoDateOnly } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StravaConnectionCard } from "@/components/settings/strava-connection-card";
 import { ProfileForm } from "@/components/settings/profile-form";
-import { SignOutButton } from "@/components/settings/sign-out-button";
 
 export default async function SettingsPage() {
   const userId = await requireUserId();
@@ -54,12 +53,6 @@ export default async function SettingsPage() {
             }
             sex={profile?.sex}
           />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-4">
-          <SignOutButton />
         </CardContent>
       </Card>
     </div>
