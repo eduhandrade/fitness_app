@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0c0b;
+  --surface: #121613;
+  --surface-hover: #182019;
+  --border: #232b25;
+  --foreground: #e9ede9;
+  --foreground-muted: #8a968c;
+  --primary: #3ea86b;
+  --primary-strong: #4fd689;
+  --primary-muted: #16301f;
+  --danger: #c0524a;
+  --warning: #b98b3e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-muted: var(--primary-muted);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --font-sans: var(--font-inter);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: var(--primary-muted);
+  color: var(--primary-strong);
+}
+
+/* thin, unobtrusive scrollbars matching the dark theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}

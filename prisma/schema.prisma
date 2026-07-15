@@ -1,0 +1,259 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = []
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Sport {
+  RUN
+  RIDE
+  SWIM
+  STRENGTH
+  BRICK
+  OTHER
+}
+
+enum ActivitySource {
+  STRAVA
+  MANUAL
+}
+
+enum AthleteLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  PROFESSIONAL
+}
+
+enum RaceDistance {
+  SPRINT
+  OLYMPIC
+  HALF_IRON
+  IRON
+  NONE
+}
+
+enum TrainingPhase {
+  BASE
+  BUILD
+  PEAK
+  TAPER
+  RECOVERY
+}
+
+enum TrainingPlanStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum SessionType {
+  EASY
+  TEMPO
+  INTERVAL
+  LONG
+  TECHNIQUE
+  BRICK
+  STRENGTH
+  REST
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile          Profile?
+  stravaConnection StravaConnection?
+  activities       Activity[]
+  bodyMetrics      BodyMetric[]
+  gymPlans         GymPlan[]
+  trainingPlans    TrainingPlan[]
+}
+
+model Profile {
+  id          String    @id @default(cuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  heightCm    Float?
+  dateOfBirth DateTime?
+  sex         Sex?
+  units       String    @default("metric")
+  updatedAt   DateTime  @updatedAt
+}
+
+model StravaConnection {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  athleteId            String
+  accessTokenEnc      String
+  refreshTokenEnc     String
+  expiresAt           DateTime
+  scope               String
+  lastSyncedAt        DateTime?
+  createdAt           DateTime @default(now())
+}
+
+model Activity {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source         ActivitySource
+  stravaId       String?        @unique
+  sport          Sport
+  name           String
+  startDate      DateTime
+  movingTimeSec  Int
+  elapsedTimeSec Int
+  distanceM      Float          @default(0)
+  elevationGainM Float          @default(0)
+  avgHeartrate   Float?
+  maxHeartrate   Float?
+  avgSpeedMs     Float?
+  avgWatts       Float?
+  avgCadence     Float?
+  calories       Float?
+  relativeEffort Float?
+  notes          String?
+  createdAt      DateTime       @default(now())
+
+  exerciseLogs         ExerciseLog[]
+  linkedTrainingSession TrainingSession[]
+
+  @@index([userId, startDate])
+  @@index([userId, sport])
+}
+
+model BodyMetric {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime
+  weightKg    Float
+  bodyFatPct  Float?
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model GymPlan {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  days GymPlanDay[]
+}
+
+model GymPlanDay {
+  id        String  @id @default(cuid())
+  planId    String
+  plan      GymPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  name      String
+  order     Int
+
+  exercises GymExercise[]
+
+  @@index([planId])
+}
+
+model GymExercise {
+  id              String     @id @default(cuid())
+  dayId           String
+  day             GymPlanDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  name            String
+  targetSets      Int
+  targetReps      Int
+  targetWeightKg  Float?
+  order           Int
+  notes           String?
+
+  exerciseLogs ExerciseLog[]
+
+  @@index([dayId])
+}
+
+model ExerciseLog {
+  id         String      @id @default(cuid())
+  activityId String
+  activity   Activity    @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   GymExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  setNumber  Int
+  reps       Int
+  weightKg   Float
+  createdAt  DateTime    @default(now())
+
+  @@index([activityId])
+  @@index([exerciseId])
+}
+
+model TrainingPlan {
+  id             String              @id @default(cuid())
+  userId         String
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  sports         Sport[]
+  level          AthleteLevel
+  daysPerWeek    Int
+  minutesPerDay  Int
+  raceDistance   RaceDistance        @default(NONE)
+  raceDate       DateTime?
+  startDate      DateTime
+  status         TrainingPlanStatus  @default(ACTIVE)
+  createdAt      DateTime            @default(now())
+
+  weeks TrainingWeek[]
+
+  @@index([userId, status])
+}
+
+model TrainingWeek {
+  id             String        @id @default(cuid())
+  planId         String
+  plan           TrainingPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  weekNumber     Int
+  startDate      DateTime
+  phase          TrainingPhase
+  targetVolumeMin Int
+
+  sessions TrainingSession[]
+
+  @@index([planId, weekNumber])
+}
+
+model TrainingSession {
+  id                  String       @id @default(cuid())
+  weekId              String
+  week                TrainingWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  date                DateTime
+  sport               Sport
+  sessionType         SessionType
+  durationMin         Int
+  targetIntensity     String?
+  description         String
+  completed           Boolean      @default(false)
+  completedActivityId String?
+  completedActivity   Activity?    @relation(fields: [completedActivityId], references: [id])
+
+  @@index([weekId, date])
+}
