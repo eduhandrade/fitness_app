@@ -256,7 +256,7 @@ export function PlanBuilder({ initialPlan }: { initialPlan?: InitialPlan }) {
           <button
             type="button"
             onClick={() => addExercise(dayIndex)}
-            className="text-xs font-medium text-primary-strong"
+            className="w-full rounded-xl border border-dashed border-primary/50 py-2 text-xs font-medium text-primary-strong active:bg-primary-muted"
           >
             + Add exercise
           </button>
@@ -266,7 +266,7 @@ export function PlanBuilder({ initialPlan }: { initialPlan?: InitialPlan }) {
       <button
         type="button"
         onClick={addDay}
-        className="text-xs font-medium text-primary-strong"
+        className="w-full rounded-xl border border-dashed border-primary/50 py-2 text-xs font-medium text-primary-strong active:bg-primary-muted"
       >
         + Add day
       </button>

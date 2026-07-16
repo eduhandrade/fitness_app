@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { setActiveGymPlan, deleteGymPlan } from "@/app/(app)/gym/actions";
 
 export function GymPlanActions({
@@ -21,6 +22,12 @@ export function GymPlanActions({
     <div className="flex items-center justify-between text-sm">
       <span className="text-foreground">{planName}</span>
       <div className="flex gap-3">
+        <Link
+          href={`/gym/plan/${planId}/edit`}
+          className="text-xs font-medium text-primary-strong"
+        >
+          Edit
+        </Link>
         <button
           type="button"
           disabled={isPending}
