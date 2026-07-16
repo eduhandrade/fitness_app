@@ -4,6 +4,7 @@ import { daysAgo } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanWizard } from "@/components/training/plan-wizard";
 import { PlanScheduleView } from "@/components/training/plan-schedule-view";
+import { DeleteTrainingPlanButton } from "@/components/training/delete-plan-button";
 
 const LEVEL_LABEL: Record<string, string> = {
   BEGINNER: "Beginner",
@@ -44,7 +45,10 @@ export default async function TrainingPlanPage() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle>{plan.name}</CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle>{plan.name}</CardTitle>
+                <DeleteTrainingPlanButton planId={plan.id} planName={plan.name} />
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-foreground">
@@ -72,6 +76,7 @@ export default async function TrainingPlanPage() {
                 sessions: week.sessions.map((s) => ({
                   id: s.id,
                   date: s.date,
+                  weekStartDate: week.startDate,
                   sport: s.sport,
                   sessionType: s.sessionType,
                   durationMin: s.durationMin,

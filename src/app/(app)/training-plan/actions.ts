@@ -114,3 +114,23 @@ export async function archiveTrainingPlan(id: string): Promise<void> {
   });
   revalidatePath("/training-plan");
 }
+
+export async function deleteTrainingPlan(id: string): Promise<void> {
+  const userId = await requireUserId();
+  await prisma.trainingPlan.delete({ where: { id, userId } });
+  revalidatePath("/training-plan");
+  revalidatePath("/");
+}
+
+export async function updateSessionDate(
+  sessionId: string,
+  date: string
+): Promise<void> {
+  const userId = await requireUserId();
+  await prisma.trainingSession.updateMany({
+    where: { id: sessionId, week: { plan: { userId } } },
+    data: { date: toUtcDateOnly(date) },
+  });
+  revalidatePath("/training-plan");
+  revalidatePath("/");
+}

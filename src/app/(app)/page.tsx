@@ -85,6 +85,8 @@ export default async function DashboardPage() {
                       targetIntensity: s.targetIntensity,
                       description: s.description,
                       completed: s.completed,
+                      date: s.date,
+                      weekStartDate: currentWeek.startDate,
                     }}
                   />
                 ))}
