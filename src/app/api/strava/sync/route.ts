@@ -7,6 +7,12 @@ import { fetchStravaActivities, mapStravaSportType } from "@/lib/strava";
 const PER_PAGE = 100;
 const MAX_PAGES = 10;
 
+// A first-time sync can page through hundreds of activities, each an
+// individual DB round-trip — give it more room than the platform default
+// (10s) so it doesn't get cut off mid-sync. 60s is the max on Vercel's
+// Hobby plan; higher plans allow more.
+export const maxDuration = 60;
+
 export async function POST() {
   const userId = await requireUserId();
 
