@@ -98,17 +98,22 @@ step needed.
    free tiers). If your provider offers a **pooled** connection string (Neon's
    has `-pooler` in the hostname), use that for `DATABASE_URL` — Vercel's
    serverless functions open many short-lived connections, and a small
-   Postgres plan runs out of connection slots quickly without pooling.
+   Postgres plan runs out of connection slots quickly without pooling. Also
+   grab the **unpooled/direct** connection string (Neon calls it
+   `DATABASE_URL_UNPOOLED`) for `DIRECT_URL` — migrations need it; a pooled
+   connection can't take the advisory lock `prisma migrate deploy` uses and
+   times out (`P1002`).
 2. Import the repo into Vercel and set these environment variables in the
    project settings (same ones as `.env.example`):
-   `DATABASE_URL`, `TOKEN_ENCRYPTION_KEY`, `SEED_USER_EMAIL`,
+   `DATABASE_URL`, `DIRECT_URL`, `TOKEN_ENCRYPTION_KEY`, `SEED_USER_EMAIL`,
    `SEED_USER_PASSWORD`, `SEED_USER_NAME`, `STRAVA_CLIENT_ID`,
    `STRAVA_CLIENT_SECRET`, `STRAVA_REDIRECT_URI`
    (`https://your-actual-vercel-url.vercel.app/api/strava/callback` — use
    your project's real generated domain, found under **Domains** in the
    Vercel dashboard, not a placeholder).
 3. Deploy. The build applies migrations automatically (step above).
-4. Seed your account once — run locally with the production `DATABASE_URL`:
+4. Seed your account once — visit `/setup` on your deployed app and tap the
+   button (no terminal needed). Or, from a computer with the repo cloned:
    ```bash
    DATABASE_URL="<your production connection string>" npx prisma db seed
    ```
