@@ -29,36 +29,41 @@ export async function createGymPlan(input: CreateGymPlanInput) {
   const userId = await requireUserId();
   const parsed = planSchema.parse(input);
 
-  await prisma.$transaction(async (tx) => {
-    await tx.gymPlan.updateMany({
-      where: { userId, isActive: true },
-      data: { isActive: false },
-    });
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.gymPlan.updateMany({
+        where: { userId, isActive: true },
+        data: { isActive: false },
+      });
 
-    await tx.gymPlan.create({
-      data: {
-        userId,
-        name: parsed.name,
-        isActive: true,
-        days: {
-          create: parsed.days.map((day, dayIndex) => ({
-            name: day.name,
-            order: dayIndex,
-            exercises: {
-              create: day.exercises.map((ex, exIndex) => ({
-                name: ex.name,
-                targetSets: ex.targetSets,
-                targetReps: ex.targetReps,
-                targetWeightKg: ex.targetWeightKg,
-                notes: ex.notes,
-                order: exIndex,
-              })),
-            },
-          })),
+      await tx.gymPlan.create({
+        data: {
+          userId,
+          name: parsed.name,
+          isActive: true,
+          days: {
+            create: parsed.days.map((day, dayIndex) => ({
+              name: day.name,
+              order: dayIndex,
+              exercises: {
+                create: day.exercises.map((ex, exIndex) => ({
+                  name: ex.name,
+                  targetSets: ex.targetSets,
+                  targetReps: ex.targetReps,
+                  targetWeightKg: ex.targetWeightKg,
+                  notes: ex.notes,
+                  order: exIndex,
+                })),
+              },
+            })),
+          },
         },
-      },
-    });
-  });
+      });
+    },
+    // Generous timeout: a cold Neon connection + several nested inserts can
+    // easily exceed Prisma's 5s interactive-transaction default (P2028).
+    { maxWait: 10_000, timeout: 30_000 }
+  );
 
   revalidatePath("/gym");
 }
@@ -71,16 +76,19 @@ export async function deleteGymPlan(id: string): Promise<void> {
 
 export async function setActiveGymPlan(id: string): Promise<void> {
   const userId = await requireUserId();
-  await prisma.$transaction([
-    prisma.gymPlan.updateMany({
-      where: { userId, isActive: true },
-      data: { isActive: false },
-    }),
-    prisma.gymPlan.update({
-      where: { id, userId },
-      data: { isActive: true },
-    }),
-  ]);
+  await prisma.$transaction(
+    [
+      prisma.gymPlan.updateMany({
+        where: { userId, isActive: true },
+        data: { isActive: false },
+      }),
+      prisma.gymPlan.update({
+        where: { id, userId },
+        data: { isActive: true },
+      }),
+    ],
+    { maxWait: 10_000, timeout: 30_000 }
+  );
   revalidatePath("/gym");
 }
 

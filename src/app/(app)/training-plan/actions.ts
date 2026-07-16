@@ -41,48 +41,53 @@ export async function createTrainingPlan(input: CreateTrainingPlanInput) {
     startDate,
   });
 
-  await prisma.$transaction(async (tx) => {
-    await tx.trainingPlan.updateMany({
-      where: { userId, status: "ACTIVE" },
-      data: { status: "ARCHIVED" },
-    });
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.trainingPlan.updateMany({
+        where: { userId, status: "ACTIVE" },
+        data: { status: "ARCHIVED" },
+      });
 
-    await tx.trainingPlan.create({
-      data: {
-        userId,
-        name: parsed.name,
-        sports: parsed.sports,
-        level: parsed.level,
-        daysPerWeek: parsed.daysPerWeek,
-        minutesPerDay: parsed.minutesPerDay,
-        raceDistance: parsed.raceDistance,
-        raceDate,
-        startDate: planStartDate,
-        status: "ACTIVE",
-        weeks: {
-          create: weeks.map((week) => ({
-            weekNumber: week.weekNumber,
-            startDate: weekStartDate(planStartDate, week.weekNumber),
-            phase: week.phase,
-            targetVolumeMin: week.targetVolumeMin,
-            sessions: {
-              create: week.sessions.map((session) => ({
-                date: new Date(
-                  weekStartDate(planStartDate, week.weekNumber).getTime() +
-                    session.dayOffset * 86_400_000
-                ),
-                sport: session.sport,
-                sessionType: session.sessionType,
-                durationMin: session.durationMin,
-                targetIntensity: session.targetIntensity,
-                description: session.description,
-              })),
-            },
-          })),
+      await tx.trainingPlan.create({
+        data: {
+          userId,
+          name: parsed.name,
+          sports: parsed.sports,
+          level: parsed.level,
+          daysPerWeek: parsed.daysPerWeek,
+          minutesPerDay: parsed.minutesPerDay,
+          raceDistance: parsed.raceDistance,
+          raceDate,
+          startDate: planStartDate,
+          status: "ACTIVE",
+          weeks: {
+            create: weeks.map((week) => ({
+              weekNumber: week.weekNumber,
+              startDate: weekStartDate(planStartDate, week.weekNumber),
+              phase: week.phase,
+              targetVolumeMin: week.targetVolumeMin,
+              sessions: {
+                create: week.sessions.map((session) => ({
+                  date: new Date(
+                    weekStartDate(planStartDate, week.weekNumber).getTime() +
+                      session.dayOffset * 86_400_000
+                  ),
+                  sport: session.sport,
+                  sessionType: session.sessionType,
+                  durationMin: session.durationMin,
+                  targetIntensity: session.targetIntensity,
+                  description: session.description,
+                })),
+              },
+            })),
+          },
         },
-      },
-    });
-  });
+      });
+    },
+    // A full plan can be dozens of weeks x several sessions each — plus a
+    // cold Neon connection — easily outlasts Prisma's 5s default (P2028).
+    { maxWait: 10_000, timeout: 30_000 }
+  );
 
   revalidatePath("/training-plan");
   revalidatePath("/");
