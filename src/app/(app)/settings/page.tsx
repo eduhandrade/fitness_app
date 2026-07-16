@@ -6,8 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StravaConnectionCard } from "@/components/settings/strava-connection-card";
 import { ProfileForm } from "@/components/settings/profile-form";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ strava_error?: string; strava_connected?: string }>;
+}) {
   const userId = await requireUserId();
+  const { strava_error, strava_connected } = await searchParams;
 
   const [connection, profile] = await Promise.all([
     prisma.stravaConnection.findUnique({ where: { userId } }),
@@ -17,6 +22,17 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Settings</h1>
+
+      {strava_error && (
+        <div className="rounded-2xl border border-danger/40 bg-danger/10 p-4 text-sm text-danger">
+          Strava connection failed: <span className="font-mono">{strava_error}</span>
+        </div>
+      )}
+      {strava_connected && !strava_error && (
+        <div className="rounded-2xl border border-primary/40 bg-primary-muted p-4 text-sm text-primary-strong">
+          Strava connected successfully.
+        </div>
+      )}
 
       <Card>
         <CardHeader>
