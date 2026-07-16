@@ -12,6 +12,11 @@ export function GymPlanActions({
 }) {
   const [isPending, startTransition] = useTransition();
 
+  function handleDelete() {
+    if (!confirm(`Delete "${planName}"? This can't be undone.`)) return;
+    startTransition(() => deleteGymPlan(planId));
+  }
+
   return (
     <div className="flex items-center justify-between text-sm">
       <span className="text-foreground">{planName}</span>
@@ -27,7 +32,7 @@ export function GymPlanActions({
         <button
           type="button"
           disabled={isPending}
-          onClick={() => startTransition(() => deleteGymPlan(planId))}
+          onClick={handleDelete}
           className="text-xs font-medium text-foreground-muted hover:text-danger disabled:opacity-50"
         >
           Delete

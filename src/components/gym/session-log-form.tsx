@@ -102,24 +102,37 @@ export function SessionLogForm({
           <button
             type="button"
             onClick={() => toggleDone(ex.id)}
-            className="flex w-full items-center gap-2.5 text-left"
+            className={`flex w-full items-center justify-between gap-2.5 rounded-xl border px-2.5 py-2 text-left transition-colors ${
+              done[ex.id]
+                ? "border-primary bg-primary-muted"
+                : "border-border bg-surface-hover active:bg-surface"
+            }`}
           >
-            <span
-              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                done[ex.id]
-                  ? "border-primary bg-primary text-background"
-                  : "border-border"
-              }`}
-              aria-hidden="true"
-            >
-              {done[ex.id] && (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="h-3 w-3">
-                  <path d="M4 12l5 5L20 6" />
-                </svg>
-              )}
+            <span className="flex items-center gap-2.5">
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+                  done[ex.id]
+                    ? "border-primary bg-primary text-background"
+                    : "border-foreground-muted"
+                }`}
+                aria-hidden="true"
+              >
+                {done[ex.id] && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="h-3.5 w-3.5">
+                    <path d="M4 12l5 5L20 6" />
+                  </svg>
+                )}
+              </span>
+              <span className={`text-sm font-medium ${done[ex.id] ? "text-foreground-muted line-through" : ""}`}>
+                {ex.name}
+              </span>
             </span>
-            <span className={`text-sm font-medium ${done[ex.id] ? "text-foreground-muted line-through" : ""}`}>
-              {ex.name}
+            <span
+              className={`shrink-0 text-[11px] font-medium ${
+                done[ex.id] ? "text-primary-strong" : "text-foreground-muted"
+              }`}
+            >
+              {done[ex.id] ? "Done" : "Mark done"}
             </span>
           </button>
           <div className={`space-y-1.5 ${done[ex.id] ? "opacity-50" : ""}`}>

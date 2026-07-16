@@ -81,6 +81,7 @@ export type StravaActivity = {
   average_cadence?: number;
   calories?: number;
   suffer_score?: number;
+  map?: { summary_polyline?: string | null };
 };
 
 export async function fetchStravaActivities(
@@ -97,6 +98,35 @@ export async function fetchStravaActivities(
   });
   if (!res.ok) {
     throw new Error(`Strava activities fetch failed: ${res.status} ${await res.text()}`);
+  }
+  return res.json();
+}
+
+export type StravaStreamSet = {
+  time?: { data: number[] };
+  distance?: { data: number[] };
+  latlng?: { data: [number, number][] };
+  heartrate?: { data: number[] };
+  velocity_smooth?: { data: number[] };
+  altitude?: { data: number[] };
+};
+
+export async function fetchActivityStreams(
+  accessToken: string,
+  stravaActivityId: string
+): Promise<StravaStreamSet> {
+  const url = new URL(`${STRAVA_API_BASE}/activities/${stravaActivityId}/streams`);
+  url.searchParams.set(
+    "keys",
+    "time,distance,latlng,heartrate,velocity_smooth,altitude"
+  );
+  url.searchParams.set("key_by_type", "true");
+
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    throw new Error(`Strava streams fetch failed: ${res.status} ${await res.text()}`);
   }
   return res.json();
 }

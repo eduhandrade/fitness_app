@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExerciseProgressPicker } from "@/components/gym/exercise-progress-picker";
 import { GymPlanActions } from "@/components/gym/gym-plan-actions";
+import { DeletePlanButton } from "@/components/gym/delete-plan-button";
 import type { TrendPoint } from "@/components/charts/trend-line-chart";
 
 export default async function GymPage() {
@@ -76,7 +77,18 @@ export default async function GymPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>{activePlan.name}</CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle>{activePlan.name}</CardTitle>
+              <div className="flex items-center gap-3">
+                <Link
+                  href={`/gym/plan/${activePlan.id}/edit`}
+                  className="text-xs font-medium text-primary-strong"
+                >
+                  Edit
+                </Link>
+                <DeletePlanButton planId={activePlan.id} planName={activePlan.name} />
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
             {activePlan.days.map((day) => (

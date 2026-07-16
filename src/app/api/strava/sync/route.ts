@@ -55,6 +55,7 @@ export async function POST() {
           avgCadence: activity.average_cadence,
           calories: activity.calories,
           relativeEffort: activity.suffer_score,
+          mapPolyline: activity.map?.summary_polyline ?? null,
         },
         create: {
           userId,
@@ -74,6 +75,7 @@ export async function POST() {
           avgCadence: activity.average_cadence,
           calories: activity.calories,
           relativeEffort: activity.suffer_score,
+          mapPolyline: activity.map?.summary_polyline ?? null,
         },
       });
       synced++;

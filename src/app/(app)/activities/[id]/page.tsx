@@ -11,7 +11,13 @@ import {
   formatSpeedKmh,
 } from "@/lib/format";
 import { SportBadge } from "@/components/sport-badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getValidStravaAccessToken } from "@/lib/strava-connection";
+import { fetchActivityStreams, type StravaStreamSet } from "@/lib/strava";
+import { computeKmSplits, buildTimeSeriesPoints } from "@/lib/activity-streams";
+import { RouteMap } from "@/components/activity/route-map";
+import { SplitsTable } from "@/components/activity/splits-table";
+import { ActivityTimeSeriesChart } from "@/components/activity/activity-time-series-chart";
 
 function paceLabel(sport: Sport, avgSpeedMs: number | null): string | null {
   if (!avgSpeedMs) return null;
@@ -43,6 +49,20 @@ export default async function ActivityDetailPage({
   });
 
   if (!activity) notFound();
+
+  let streams: StravaStreamSet | null = null;
+  if (activity.source === "STRAVA" && activity.stravaId) {
+    try {
+      const accessToken = await getValidStravaAccessToken(userId);
+      if (accessToken) {
+        streams = await fetchActivityStreams(accessToken, activity.stravaId);
+      }
+    } catch {
+      streams = null;
+    }
+  }
+  const splits = streams ? computeKmSplits(streams) : [];
+  const chartPoints = streams ? buildTimeSeriesPoints(streams) : [];
 
   const pace = paceLabel(activity.sport, activity.avgSpeedMs);
   const stats: { label: string; value: string }[] = [];
@@ -109,6 +129,39 @@ export default async function ActivityDetailPage({
         <p className="text-sm text-foreground-muted">
           No additional metrics available for this activity.
         </p>
+      )}
+
+      {activity.mapPolyline && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Route</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RouteMap polyline={activity.mapPolyline} />
+          </CardContent>
+        </Card>
+      )}
+
+      {chartPoints.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pace &amp; heart rate</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ActivityTimeSeriesChart data={chartPoints} />
+          </CardContent>
+        </Card>
+      )}
+
+      {splits.length > 1 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Splits</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SplitsTable splits={splits} />
+          </CardContent>
+        </Card>
       )}
     </div>
   );

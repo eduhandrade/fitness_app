@@ -3,9 +3,10 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { createGymPlan } from "@/app/(app)/gym/actions";
+import { createGymPlan, updateGymPlan } from "@/app/(app)/gym/actions";
 
 type ExerciseDraft = {
+  id?: string;
   name: string;
   targetSets: number;
   targetReps: number;
@@ -13,8 +14,25 @@ type ExerciseDraft = {
 };
 
 type DayDraft = {
+  id?: string;
   name: string;
   exercises: ExerciseDraft[];
+};
+
+type InitialPlan = {
+  id: string;
+  name: string;
+  days: {
+    id: string;
+    name: string;
+    exercises: {
+      id: string;
+      name: string;
+      targetSets: number;
+      targetReps: number;
+      targetWeightKg: number | null;
+    }[];
+  }[];
 };
 
 function emptyExercise(): ExerciseDraft {
@@ -25,10 +43,24 @@ function emptyDay(name: string): DayDraft {
   return { name, exercises: [emptyExercise()] };
 }
 
-export function PlanBuilder() {
+export function PlanBuilder({ initialPlan }: { initialPlan?: InitialPlan }) {
   const router = useRouter();
-  const [planName, setPlanName] = useState("");
-  const [days, setDays] = useState<DayDraft[]>([emptyDay("Day 1")]);
+  const [planName, setPlanName] = useState(initialPlan?.name ?? "");
+  const [days, setDays] = useState<DayDraft[]>(
+    initialPlan
+      ? initialPlan.days.map((d) => ({
+          id: d.id,
+          name: d.name,
+          exercises: d.exercises.map((e) => ({
+            id: e.id,
+            name: e.name,
+            targetSets: e.targetSets,
+            targetReps: e.targetReps,
+            targetWeightKg: e.targetWeightKg != null ? String(e.targetWeightKg) : "",
+          })),
+        }))
+      : [emptyDay("Day 1")]
+  );
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -104,18 +136,25 @@ export function PlanBuilder() {
 
     startTransition(async () => {
       try {
-        await createGymPlan({
+        const payload = {
           name: planName.trim(),
           days: days.map((d) => ({
+            id: d.id,
             name: d.name.trim(),
             exercises: d.exercises.map((e) => ({
+              id: e.id,
               name: e.name.trim(),
               targetSets: e.targetSets,
               targetReps: e.targetReps,
               targetWeightKg: e.targetWeightKg ? Number(e.targetWeightKg) : undefined,
             })),
           })),
-        });
+        };
+        if (initialPlan) {
+          await updateGymPlan(initialPlan.id, payload);
+        } else {
+          await createGymPlan(payload);
+        }
         router.push("/gym");
       } catch {
         setError("Could not save the plan. Try again.");
@@ -235,7 +274,7 @@ export function PlanBuilder() {
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <Button type="button" onClick={handleSave} disabled={isPending} className="w-full">
-        {isPending ? "Saving…" : "Save plan"}
+        {isPending ? "Saving…" : initialPlan ? "Save changes" : "Save plan"}
       </Button>
     </div>
   );
