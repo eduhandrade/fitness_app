@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
@@ -9,7 +8,6 @@ export async function GET(req: NextRequest) {
   const userId = await requireUserId();
 
   const code = req.nextUrl.searchParams.get("code");
-  const state = req.nextUrl.searchParams.get("state");
   const error = req.nextUrl.searchParams.get("error");
 
   const settingsUrl = new URL("/settings", req.nextUrl.origin);
@@ -19,12 +17,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(settingsUrl);
   }
 
-  const cookieStore = await cookies();
-  const expectedState = cookieStore.get("strava_oauth_state")?.value;
-  cookieStore.delete("strava_oauth_state");
-
-  if (!code || !state || !expectedState || state !== expectedState) {
-    settingsUrl.searchParams.set("strava_error", "invalid_state");
+  if (!code) {
+    settingsUrl.searchParams.set("strava_error", "missing_code");
     return NextResponse.redirect(settingsUrl);
   }
 

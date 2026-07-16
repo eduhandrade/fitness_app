@@ -10,14 +10,13 @@ function requireEnv(name: string): string {
   return value;
 }
 
-export function buildStravaAuthorizeUrl(state: string): string {
+export function buildStravaAuthorizeUrl(): string {
   const url = new URL(STRAVA_OAUTH_AUTHORIZE_URL);
   url.searchParams.set("client_id", requireEnv("STRAVA_CLIENT_ID"));
   url.searchParams.set("redirect_uri", requireEnv("STRAVA_REDIRECT_URI"));
   url.searchParams.set("response_type", "code");
   url.searchParams.set("approval_prompt", "auto");
   url.searchParams.set("scope", "read,activity:read_all,profile:read_all");
-  url.searchParams.set("state", state);
   return url.toString();
 }
 
