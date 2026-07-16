@@ -81,23 +81,28 @@ export default async function ActivitiesPage({
           <CardContent className="p-0">
             <ul className="divide-y divide-border">
               {activities.map((a) => (
-                <li key={a.id} className="flex items-center justify-between px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm text-foreground">{a.name}</p>
-                    <div className="mt-0.5 flex items-center gap-2">
-                      <SportBadge sport={a.sport} />
-                      <span className="text-xs text-foreground-muted">
-                        {formatUtcDate(a.startDate, "long")}
-                      </span>
+                <li key={a.id}>
+                  <Link
+                    href={`/activities/${a.id}`}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-surface-hover"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-foreground">{a.name}</p>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <SportBadge sport={a.sport} />
+                        <span className="text-xs text-foreground-muted">
+                          {formatUtcDate(a.startDate, "long")}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="shrink-0 text-right text-xs text-foreground-muted">
-                    {a.distanceM > 0 && <p>{formatDistanceKm(a.distanceM)}</p>}
-                    <p>{formatDuration(a.movingTimeSec)}</p>
-                    {secondaryMetric(a.sport, a.avgSpeedMs) && (
-                      <p>{secondaryMetric(a.sport, a.avgSpeedMs)}</p>
-                    )}
-                  </div>
+                    <div className="shrink-0 text-right text-xs text-foreground-muted">
+                      {a.distanceM > 0 && <p>{formatDistanceKm(a.distanceM)}</p>}
+                      <p>{formatDuration(a.movingTimeSec)}</p>
+                      {secondaryMetric(a.sport, a.avgSpeedMs) && (
+                        <p>{secondaryMetric(a.sport, a.avgSpeedMs)}</p>
+                      )}
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>

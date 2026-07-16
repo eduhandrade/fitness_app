@@ -34,8 +34,15 @@ export function SessionLogForm({
       ])
     )
   );
+  const [done, setDone] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(exercises.map((ex) => [ex.id, false]))
+  );
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  function toggleDone(exerciseId: string) {
+    setDone((prev) => ({ ...prev, [exerciseId]: !prev[exerciseId] }));
+  }
 
   function updateSet(exerciseId: string, index: number, patch: Partial<SetDraft>) {
     setSets((prev) => ({
@@ -86,9 +93,36 @@ export function SessionLogForm({
   return (
     <div className="space-y-4">
       {exercises.map((ex) => (
-        <div key={ex.id} className="rounded-2xl border border-border p-3 space-y-2">
-          <p className="text-sm font-medium">{ex.name}</p>
-          <div className="space-y-1.5">
+        <div
+          key={ex.id}
+          className={`rounded-2xl border p-3 space-y-2 ${
+            done[ex.id] ? "border-primary/40" : "border-border"
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => toggleDone(ex.id)}
+            className="flex w-full items-center gap-2.5 text-left"
+          >
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                done[ex.id]
+                  ? "border-primary bg-primary text-background"
+                  : "border-border"
+              }`}
+              aria-hidden="true"
+            >
+              {done[ex.id] && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="h-3 w-3">
+                  <path d="M4 12l5 5L20 6" />
+                </svg>
+              )}
+            </span>
+            <span className={`text-sm font-medium ${done[ex.id] ? "text-foreground-muted line-through" : ""}`}>
+              {ex.name}
+            </span>
+          </button>
+          <div className={`space-y-1.5 ${done[ex.id] ? "opacity-50" : ""}`}>
             {sets[ex.id].map((set, index) => (
               <div key={index} className="flex items-center gap-1.5">
                 <span className="w-5 shrink-0 text-xs text-foreground-muted">
