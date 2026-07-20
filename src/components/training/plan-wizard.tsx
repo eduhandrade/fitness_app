@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createTrainingPlan } from "@/app/(app)/training-plan/actions";
 import { Sport, AthleteLevel, RaceDistance } from "@/generated/prisma/enums";
+import { SPORT_META } from "@/lib/sport-meta";
+import type { RecentTrainingSummary } from "@/lib/training/types";
 
 const SPORT_OPTIONS: { value: Sport; label: string }[] = [
   { value: Sport.SWIM, label: "Swim" },
@@ -28,19 +30,35 @@ const RACE_OPTIONS: { value: RaceDistance; label: string }[] = [
   { value: RaceDistance.IRON, label: "Full Iron" },
 ];
 
+const WEEKDAY_OPTIONS: { value: number; label: string }[] = [
+  { value: 0, label: "Mon" },
+  { value: 1, label: "Tue" },
+  { value: 2, label: "Wed" },
+  { value: 3, label: "Thu" },
+  { value: 4, label: "Fri" },
+  { value: 5, label: "Sat" },
+  { value: 6, label: "Sun" },
+];
+
+const DEFAULT_TRAINING_DAYS = [0, 2, 4, 5]; // Mon / Wed / Fri / Sat
+
 function todayLocalISODate() {
   const now = new Date();
   const offsetMs = now.getTimezoneOffset() * 60_000;
   return new Date(now.getTime() - offsetMs).toISOString().slice(0, 10);
 }
 
-export function PlanWizard() {
+export function PlanWizard({
+  recentTraining,
+}: {
+  recentTraining?: RecentTrainingSummary | null;
+}) {
   const router = useRouter();
   const [name, setName] = useState("My training plan");
   const [sports, setSports] = useState<Sport[]>([Sport.SWIM, Sport.RIDE, Sport.RUN]);
   const [level, setLevel] = useState<AthleteLevel>(AthleteLevel.INTERMEDIATE);
-  const [daysPerWeek, setDaysPerWeek] = useState(4);
-  const [minutesPerDay, setMinutesPerDay] = useState(60);
+  const [trainingDays, setTrainingDays] = useState<number[]>(DEFAULT_TRAINING_DAYS);
+  const [minMinutesPerSession, setMinMinutesPerSession] = useState(45);
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(RaceDistance.NONE);
   const [raceDate, setRaceDate] = useState("");
   const [startDate, setStartDate] = useState(todayLocalISODate());
@@ -53,10 +71,22 @@ export function PlanWizard() {
     );
   }
 
+  function toggleDay(day: number) {
+    setTrainingDays((prev) =>
+      prev.includes(day)
+        ? prev.filter((d) => d !== day)
+        : [...prev, day].sort((a, b) => a - b)
+    );
+  }
+
   function handleSubmit() {
     setError(null);
     if (sports.length === 0) {
       setError("Pick at least one discipline.");
+      return;
+    }
+    if (trainingDays.length === 0) {
+      setError("Pick at least one training day.");
       return;
     }
     if (raceDistance !== RaceDistance.NONE && !raceDate) {
@@ -70,8 +100,8 @@ export function PlanWizard() {
           name: name.trim() || "My training plan",
           sports,
           level,
-          daysPerWeek,
-          minutesPerDay,
+          trainingDays,
+          minMinutesPerSession,
           raceDistance,
           raceDate: raceDistance !== RaceDistance.NONE ? raceDate : undefined,
           startDate,
@@ -83,13 +113,77 @@ export function PlanWizard() {
     });
   }
 
+  const hasRecentData = !!recentTraining && recentTraining.sports.length > 0;
+
   return (
     <div className="space-y-4">
+      {recentTraining && (
+        <div className="rounded-xl border border-border bg-surface-hover p-3">
+          <p className="text-xs font-medium text-foreground-muted">
+            Last {recentTraining.windowDays} days on Strava
+          </p>
+          {hasRecentData ? (
+            <ul className="mt-1.5 space-y-1">
+              {recentTraining.sports.map((s) => (
+                <li key={s.sport} className="text-xs text-foreground">
+                  <span className="font-medium">{SPORT_META[s.sport].label}</span>:{" "}
+                  {(s.avgWeeklyMinutes / 60).toFixed(1)}h/week
+                  {s.avgPaceLabel ? ` · avg ${s.avgPaceLabel}` : ""}
+                  {s.avgHeartrate ? ` · ~${s.avgHeartrate} bpm` : ""}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-xs text-foreground-muted">
+              No synced Strava activity found — sync in Settings first for a plan
+              tuned to your recent training, or continue with general recommendations.
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-foreground-muted">Plan name</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
+          className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-foreground-muted">
+          Which days do you plan to train?
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {WEEKDAY_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => toggleDay(opt.value)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
+                trainingDays.includes(opt.value)
+                  ? "border-primary bg-primary-muted text-primary-strong"
+                  : "border-border text-foreground-muted"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-foreground-muted">
+          Minimum minutes per session
+        </label>
+        <input
+          type="number"
+          min={15}
+          max={240}
+          step={5}
+          value={minMinutesPerSession}
+          onChange={(e) => setMinMinutesPerSession(Number(e.target.value))}
           className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
         />
       </div>
@@ -127,32 +221,6 @@ export function PlanWizard() {
             </option>
           ))}
         </select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-foreground-muted">Days / week</label>
-          <input
-            type="number"
-            min={1}
-            max={7}
-            value={daysPerWeek}
-            onChange={(e) => setDaysPerWeek(Number(e.target.value))}
-            className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
-          />
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-foreground-muted">Minutes / day</label>
-          <input
-            type="number"
-            min={15}
-            max={240}
-            step={5}
-            value={minutesPerDay}
-            onChange={(e) => setMinutesPerDay(Number(e.target.value))}
-            className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
-          />
-        </div>
       </div>
 
       <div className="space-y-1.5">

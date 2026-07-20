@@ -23,3 +23,13 @@ export function toIsoDateOnly(date: Date): string {
 export function daysAgo(days: number): Date {
   return new Date(Date.now() - days * 86_400_000);
 }
+
+const WEEKDAY_SHORT_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/** Formats weekday indices (0=Monday..6=Sunday) as "Mon, Wed, Fri". */
+export function formatWeekdays(days: number[]): string {
+  return [...days]
+    .sort((a, b) => a - b)
+    .map((d) => WEEKDAY_SHORT_LABELS[d])
+    .join(", ");
+}

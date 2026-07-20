@@ -1,17 +1,6 @@
 import { AthleteLevel, SessionType, Sport, TrainingPhase } from "@/generated/prisma/enums";
 import { describeSession, INTENSITY_BY_TYPE } from "./sessionTemplates";
-import type { GeneratedSession } from "./types";
-
-/** Training weekdays to use for a given number of sessions/week (0=Mon..6=Sun), key days on weekends. */
-const DAY_PATTERNS: Record<number, number[]> = {
-  1: [5],
-  2: [3, 5],
-  3: [1, 3, 5],
-  4: [1, 3, 5, 6],
-  5: [0, 1, 3, 5, 6],
-  6: [0, 1, 2, 3, 5, 6],
-  7: [0, 1, 2, 3, 4, 5, 6],
-};
+import type { GeneratedSession, RecentTrainingSummary } from "./types";
 
 const ENDURANCE_PRIORITY: Sport[] = [Sport.RIDE, Sport.RUN, Sport.SWIM];
 
@@ -35,24 +24,26 @@ const TYPE_WEIGHT: Record<SessionType, number> = {
 };
 
 export function allocateWeek({
-  daysPerWeek,
-  minutesPerDay,
+  trainingDays,
+  minMinutesPerSession,
   sports,
   level,
   phase,
   weekNumber,
   targetVolumeMin,
+  recentTraining,
 }: {
-  daysPerWeek: number;
-  minutesPerDay: number;
+  /** Weekday indices the athlete chose to train, 0=Monday..6=Sunday. */
+  trainingDays: number[];
+  minMinutesPerSession: number;
   sports: Sport[];
   level: AthleteLevel;
   phase: TrainingPhase;
   weekNumber: number;
   targetVolumeMin: number;
+  recentTraining?: RecentTrainingSummary | null;
 }): GeneratedSession[] {
-  const clampedDays = Math.max(1, Math.min(7, daysPerWeek));
-  const trainingDayOffsets = DAY_PATTERNS[clampedDays];
+  const trainingDayOffsets = [...trainingDays].sort((a, b) => a - b);
   const endurance = ENDURANCE_PRIORITY.filter((s) => sports.includes(s));
   const includeStrength = sports.includes(Sport.STRENGTH);
 
@@ -102,19 +93,25 @@ export function allocateWeek({
     return [];
   }
 
-  const rawTotal = raw.reduce((sum, s) => sum + s.weight * minutesPerDay, 0);
+  const rawTotal = raw.reduce((sum, s) => sum + s.weight * minMinutesPerSession, 0);
   const scale = rawTotal > 0 ? targetVolumeMin / rawTotal : 1;
 
   return raw
     .sort((a, b) => a.dayOffset - b.dayOffset)
-    .map((s) => ({
-      dayOffset: s.dayOffset,
-      sport: s.sport,
-      sessionType: s.type,
-      durationMin: Math.max(15, Math.round((s.weight * minutesPerDay * scale) / 5) * 5),
-      targetIntensity: INTENSITY_BY_TYPE[s.type],
-      description: describeSession(s.sport, s.type, level),
-    }));
+    .map((s) => {
+      const recentSummary = recentTraining?.sports.find((r) => r.sport === s.sport) ?? null;
+      return {
+        dayOffset: s.dayOffset,
+        sport: s.sport,
+        sessionType: s.type,
+        durationMin: Math.max(
+          minMinutesPerSession,
+          Math.round((s.weight * minMinutesPerSession * scale) / 5) * 5
+        ),
+        targetIntensity: INTENSITY_BY_TYPE[s.type],
+        description: describeSession(s.sport, s.type, level, recentSummary),
+      };
+    });
 }
 
 /** Mutates `raw` in place, upgrading some EASY slots to LONG/TEMPO/INTERVAL/TECHNIQUE per phase. */

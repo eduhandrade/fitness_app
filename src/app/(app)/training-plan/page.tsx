@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import { daysAgo } from "@/lib/date";
+import { daysAgo, formatWeekdays } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlanWizard } from "@/components/training/plan-wizard";
 import { PlanScheduleView } from "@/components/training/plan-schedule-view";
 import { DeleteTrainingPlanButton } from "@/components/training/delete-plan-button";
+import { getRecentTrainingSummary } from "@/lib/training/recentTraining";
 
 const LEVEL_LABEL: Record<string, string> = {
   BEGINNER: "Beginner",
@@ -16,15 +17,18 @@ const LEVEL_LABEL: Record<string, string> = {
 export default async function TrainingPlanPage() {
   const userId = await requireUserId();
 
-  const plan = await prisma.trainingPlan.findFirst({
-    where: { userId, status: "ACTIVE" },
-    include: {
-      weeks: {
-        orderBy: { weekNumber: "asc" },
-        include: { sessions: { orderBy: { date: "asc" } } },
+  const [plan, recentTraining] = await Promise.all([
+    prisma.trainingPlan.findFirst({
+      where: { userId, status: "ACTIVE" },
+      include: {
+        weeks: {
+          orderBy: { weekNumber: "asc" },
+          include: { sessions: { orderBy: { date: "asc" } } },
+        },
       },
-    },
-  });
+    }),
+    getRecentTrainingSummary(userId),
+  ]);
 
   const now = daysAgo(0);
 
@@ -38,7 +42,7 @@ export default async function TrainingPlanPage() {
             <CardTitle>Build your plan</CardTitle>
           </CardHeader>
           <CardContent>
-            <PlanWizard />
+            <PlanWizard recentTraining={recentTraining} />
           </CardContent>
         </Card>
       ) : (
@@ -52,8 +56,8 @@ export default async function TrainingPlanPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-foreground">
-                {LEVEL_LABEL[plan.level]} · {plan.daysPerWeek} days/week ·{" "}
-                {plan.minutesPerDay} min/day
+                {LEVEL_LABEL[plan.level]} · {formatWeekdays(plan.trainingDays)} ·{" "}
+                ≥{plan.minMinutesPerSession} min/session
               </p>
               {plan.raceDate && (
                 <p className="mt-1 text-xs text-foreground-muted">
@@ -96,7 +100,7 @@ export default async function TrainingPlanPage() {
                 </CardHeader>
               </summary>
               <CardContent>
-                <PlanWizard />
+                <PlanWizard recentTraining={recentTraining} />
               </CardContent>
             </details>
           </Card>

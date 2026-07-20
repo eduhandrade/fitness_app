@@ -6,14 +6,15 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { Sport, AthleteLevel, RaceDistance } from "@/generated/prisma/enums";
 import { generatePlan, weekStartDate } from "@/lib/training/generatePlan";
+import { getRecentTrainingSummary } from "@/lib/training/recentTraining";
 import { toUtcDateOnly } from "@/lib/date";
 
 const wizardSchema = z.object({
   name: z.string().min(1).max(80),
   sports: z.array(z.nativeEnum(Sport)).min(1),
   level: z.nativeEnum(AthleteLevel),
-  daysPerWeek: z.coerce.number().int().min(1).max(7),
-  minutesPerDay: z.coerce.number().int().min(15).max(240),
+  trainingDays: z.array(z.coerce.number().int().min(0).max(6)).min(1).max(7),
+  minMinutesPerSession: z.coerce.number().int().min(15).max(240),
   raceDistance: z.nativeEnum(RaceDistance),
   raceDate: z.string().optional(),
   startDate: z.string(),
@@ -30,15 +31,17 @@ export async function createTrainingPlan(input: CreateTrainingPlanInput) {
       ? toUtcDateOnly(parsed.raceDate)
       : null;
   const startDate = toUtcDateOnly(parsed.startDate);
+  const recentTraining = await getRecentTrainingSummary(userId);
 
   const { weeks, planStartDate } = generatePlan({
     sports: parsed.sports,
     level: parsed.level,
-    daysPerWeek: parsed.daysPerWeek,
-    minutesPerDay: parsed.minutesPerDay,
+    trainingDays: parsed.trainingDays,
+    minMinutesPerSession: parsed.minMinutesPerSession,
     raceDistance: parsed.raceDistance,
     raceDate,
     startDate,
+    recentTraining,
   });
 
   await prisma.$transaction(
@@ -54,8 +57,9 @@ export async function createTrainingPlan(input: CreateTrainingPlanInput) {
           name: parsed.name,
           sports: parsed.sports,
           level: parsed.level,
-          daysPerWeek: parsed.daysPerWeek,
-          minutesPerDay: parsed.minutesPerDay,
+          daysPerWeek: parsed.trainingDays.length,
+          trainingDays: parsed.trainingDays,
+          minMinutesPerSession: parsed.minMinutesPerSession,
           raceDistance: parsed.raceDistance,
           raceDate,
           startDate: planStartDate,

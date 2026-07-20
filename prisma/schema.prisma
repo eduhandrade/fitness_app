@@ -209,19 +209,20 @@ model ExerciseLog {
 }
 
 model TrainingPlan {
-  id             String              @id @default(cuid())
-  userId         String
-  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name           String
-  sports         Sport[]
-  level          AthleteLevel
-  daysPerWeek    Int
-  minutesPerDay  Int
-  raceDistance   RaceDistance        @default(NONE)
-  raceDate       DateTime?
-  startDate      DateTime
-  status         TrainingPlanStatus  @default(ACTIVE)
-  createdAt      DateTime            @default(now())
+  id                   String              @id @default(cuid())
+  userId               String
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                 String
+  sports               Sport[]
+  level                AthleteLevel
+  daysPerWeek          Int
+  trainingDays         Int[]
+  minMinutesPerSession Int
+  raceDistance         RaceDistance        @default(NONE)
+  raceDate             DateTime?
+  startDate            DateTime
+  status               TrainingPlanStatus  @default(ACTIVE)
+  createdAt            DateTime            @default(now())
 
   weeks TrainingWeek[]
 

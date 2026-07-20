@@ -1,4 +1,5 @@
 import { AthleteLevel, SessionType, Sport } from "@/generated/prisma/enums";
+import type { RecentSportSummary } from "./types";
 
 export const INTENSITY_BY_TYPE: Record<SessionType, string> = {
   EASY: "Zone 1-2 · conversational",
@@ -34,24 +35,44 @@ const SPORT_LABEL: Record<Sport, string> = {
   OTHER: "session",
 };
 
+/** A parenthetical grounding the session in the athlete's actual recent
+ * training, when we have it — only makes sense for the steady-effort
+ * session types where "your usual pace" is a meaningful anchor. */
+function recentHint(
+  type: SessionType,
+  recentSummary?: RecentSportSummary | null
+): string {
+  if (!recentSummary) return "";
+  if (type !== "EASY" && type !== "LONG" && type !== "TEMPO") return "";
+
+  const parts: string[] = [];
+  if (recentSummary.avgPaceLabel) parts.push(`recent avg ${recentSummary.avgPaceLabel}`);
+  if (recentSummary.avgHeartrate) parts.push(`~${recentSummary.avgHeartrate} bpm`);
+  if (parts.length === 0) return "";
+
+  return ` (Based on your last 3 months: ${parts.join(", ")}.)`;
+}
+
 export function describeSession(
   sport: Sport,
   type: SessionType,
-  level: AthleteLevel
+  level: AthleteLevel,
+  recentSummary?: RecentSportSummary | null
 ): string {
   const label = SPORT_LABEL[sport];
+  const hint = recentHint(type, recentSummary);
 
   switch (type) {
     case "EASY":
-      return `Easy ${label} at a conversational pace — this builds aerobic base without adding fatigue.`;
+      return `Easy ${label} at a conversational pace — this builds aerobic base without adding fatigue.${hint}`;
     case "LONG":
-      return `Long steady ${label}, the week's key aerobic-endurance session. Keep the effort controlled throughout.`;
+      return `Long steady ${label}, the week's key aerobic-endurance session. Keep the effort controlled throughout.${hint}`;
     case "TECHNIQUE":
       return sport === "SWIM"
         ? "Technique-focused swim: drills for catch, rotation, and breathing, plus easy aerobic sets."
         : `Technique-focused ${label}: light effort, prioritize form and cadence over speed.`;
     case "TEMPO":
-      return `Tempo ${label}: warm up easy, then ${TEMPO_STRUCTURE[level]}, cool down easy.`;
+      return `Tempo ${label}: warm up easy, then ${TEMPO_STRUCTURE[level]}, cool down easy.${hint}`;
     case "INTERVAL":
       return `Interval ${label}: warm up easy, then ${INTERVAL_STRUCTURE[level]}, cool down easy.`;
     case "BRICK":
