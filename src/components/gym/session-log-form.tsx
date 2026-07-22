@@ -112,7 +112,7 @@ export function SessionLogForm({
               <span
                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
                   done[ex.id]
-                    ? "border-primary bg-primary text-background"
+                    ? "border-primary bg-primary text-on-primary"
                     : "border-foreground-muted"
                 }`}
                 aria-hidden="true"
@@ -128,7 +128,7 @@ export function SessionLogForm({
               </span>
             </span>
             <span
-              className={`shrink-0 text-[11px] font-medium ${
+              className={`shrink-0 text-[12px] font-medium ${
                 done[ex.id] ? "text-primary-strong" : "text-foreground-muted"
               }`}
             >

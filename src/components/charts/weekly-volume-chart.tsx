@@ -12,11 +12,16 @@ import {
 } from "recharts";
 import { Sport } from "@/generated/prisma/enums";
 import { SPORT_META } from "@/lib/sport-meta";
+import { useTheme } from "@/components/theme/theme-provider";
+import { CHART_COLORS } from "@/lib/theme-colors";
 import type { WeeklyVolumePoint } from "@/lib/aggregate";
 
 const SPORTS_IN_CHART: Sport[] = [Sport.RUN, Sport.RIDE, Sport.SWIM, Sport.STRENGTH];
 
 export function WeeklyVolumeChart({ data }: { data: WeeklyVolumePoint[] }) {
+  const { theme } = useTheme();
+  const c = CHART_COLORS[theme];
+
   const hasAnyData = data.some((point) =>
     SPORTS_IN_CHART.some((sport) => point[sport] > 0)
   );
@@ -33,18 +38,18 @@ export function WeeklyVolumeChart({ data }: { data: WeeklyVolumePoint[] }) {
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke="#232b25" vertical={false} />
+          <CartesianGrid stroke={c.grid} vertical={false} />
           <XAxis
             dataKey="week"
-            stroke="#8a968c"
-            tick={{ fill: "#8a968c", fontSize: 11 }}
+            stroke={c.axis}
+            tick={{ fill: c.axis, fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: "#232b25" }}
+            axisLine={{ stroke: c.grid }}
             minTickGap={16}
           />
           <YAxis
-            stroke="#8a968c"
-            tick={{ fill: "#8a968c", fontSize: 11 }}
+            stroke={c.axis}
+            tick={{ fill: c.axis, fontSize: 11 }}
             tickLine={false}
             axisLine={false}
             width={36}
@@ -52,20 +57,20 @@ export function WeeklyVolumeChart({ data }: { data: WeeklyVolumePoint[] }) {
               value: "min",
               angle: -90,
               position: "insideLeft",
-              fill: "#8a968c",
+              fill: c.axis,
               fontSize: 11,
             }}
           />
           <Tooltip
-            cursor={{ fill: "#182019" }}
+            cursor={{ fill: c.cursor }}
             contentStyle={{
-              background: "#121613",
-              border: "1px solid #232b25",
+              background: c.tooltipBg,
+              border: `1px solid ${c.tooltipBorder}`,
               borderRadius: 10,
               fontSize: 12,
-              color: "#e9ede9",
+              color: c.tooltipText,
             }}
-            labelStyle={{ color: "#8a968c" }}
+            labelStyle={{ color: c.axis }}
             formatter={(value, name) => [
               `${Math.round(Number(value))} min`,
               SPORT_META[name as Sport]?.label ?? String(name),
@@ -73,7 +78,7 @@ export function WeeklyVolumeChart({ data }: { data: WeeklyVolumePoint[] }) {
           />
           <Legend
             formatter={(value) => (
-              <span style={{ color: "#8a968c", fontSize: 12 }}>
+              <span style={{ color: c.axis, fontSize: 12 }}>
                 {SPORT_META[value as Sport]?.label ?? value}
               </span>
             )}

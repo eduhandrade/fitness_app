@@ -56,9 +56,9 @@ export function RouteMap({ polyline }: { polyline: string }) {
       role="img"
       aria-label="Route map"
     >
-      <path d={path} fill="none" stroke="#3ea86b" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={startX} cy={startY} r={4} fill="#3ea86b" />
-      <circle cx={endX} cy={endY} r={4} fill="#e9ede9" stroke="#3ea86b" strokeWidth={1.5} />
+      <path d={path} fill="none" stroke="var(--primary)" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={startX} cy={startY} r={4} fill="var(--primary)" />
+      <circle cx={endX} cy={endY} r={4} fill="var(--foreground)" stroke="var(--primary)" strokeWidth={1.5} />
     </svg>
   );
 }

@@ -12,6 +12,28 @@
   --primary-muted: #16301f;
   --danger: #c0524a;
   --warning: #b98b3e;
+  /* Fixed dark tone for text/icons placed on top of primary-colored
+     surfaces (buttons, badges) — deliberately NOT tied to --background,
+     since a mid-tone green button needs dark text in both themes. */
+  --on-primary: #0a1510;
+
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --background: #f6f8f5;
+  --surface: #ffffff;
+  --surface-hover: #eef1ec;
+  --border: #dde4dc;
+  --foreground: #161d17;
+  --foreground-muted: #5c6a60;
+  --primary: #2f8f58;
+  --primary-strong: #227046;
+  --primary-muted: #dcefe2;
+  --danger: #b3392f;
+  --warning: #93641f;
+
+  color-scheme: light;
 }
 
 @theme inline {
@@ -26,16 +48,18 @@
   --color-primary-muted: var(--primary-muted);
   --color-danger: var(--danger);
   --color-warning: var(--warning);
+  --color-on-primary: var(--on-primary);
   --font-sans: var(--font-inter);
 }
 
 html {
-  color-scheme: dark;
+  font-size: 106.25%;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 * {

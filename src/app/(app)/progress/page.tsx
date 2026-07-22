@@ -87,7 +87,7 @@ export default async function ProgressPage() {
           <CardTitle>Weight trend</CardTitle>
         </CardHeader>
         <CardContent>
-          <TrendLineChart data={weightTrend} color="#4fd689" unit="kg" />
+          <TrendLineChart data={weightTrend} unit="kg" />
         </CardContent>
       </Card>
 

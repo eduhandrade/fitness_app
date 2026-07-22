@@ -30,7 +30,7 @@ function paceLabel(sport: Sport, avgSpeedMs: number | null): string | null {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-border bg-surface-hover p-3">
-      <p className="text-[11px] text-foreground-muted">{label}</p>
+      <p className="text-[12px] text-foreground-muted">{label}</p>
       <p className="mt-0.5 text-sm font-medium text-foreground">{value}</p>
     </div>
   );

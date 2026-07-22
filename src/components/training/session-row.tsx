@@ -59,7 +59,7 @@ export function SessionRow({ session }: { session: SessionRowData }) {
           <span
             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
               session.completed
-                ? "border-primary bg-primary text-background"
+                ? "border-primary bg-primary text-on-primary"
                 : "border-foreground-muted"
             }`}
             aria-hidden="true"
@@ -87,7 +87,7 @@ export function SessionRow({ session }: { session: SessionRowData }) {
           </span>
         </span>
         <span
-          className={`shrink-0 text-[11px] font-medium ${
+          className={`shrink-0 text-[12px] font-medium ${
             session.completed ? "text-primary-strong" : "text-foreground-muted"
           }`}
         >
@@ -110,7 +110,7 @@ export function SessionRow({ session }: { session: SessionRowData }) {
               type="button"
               disabled={isPending}
               onClick={handleDateSave}
-              className="text-[11px] font-medium text-primary-strong disabled:opacity-50"
+              className="text-[12px] font-medium text-primary-strong disabled:opacity-50"
             >
               Save
             </button>
@@ -120,7 +120,7 @@ export function SessionRow({ session }: { session: SessionRowData }) {
                 setDateValue(toIsoDateOnly(session.date));
                 setIsEditingDate(false);
               }}
-              className="text-[11px] font-medium text-foreground-muted"
+              className="text-[12px] font-medium text-foreground-muted"
             >
               Cancel
             </button>
@@ -129,7 +129,7 @@ export function SessionRow({ session }: { session: SessionRowData }) {
           <button
             type="button"
             onClick={() => setIsEditingDate(true)}
-            className="text-[11px] font-medium text-foreground-muted hover:text-primary-strong"
+            className="text-[12px] font-medium text-foreground-muted hover:text-primary-strong"
           >
             Change date
           </button>

@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import { getLogoMarkLayout } from "@/lib/brand";
 
 export async function GET(
   _req: NextRequest,
@@ -7,42 +8,52 @@ export async function GET(
 ) {
   const { size: sizeParam } = await params;
   const size = sizeParam === "512" ? 512 : 192;
-  const ring = Math.round(size * 0.5);
-  const border = Math.round(size * 0.09);
-  const dot = Math.round(size * 0.16);
+  const l = getLogoMarkLayout(size);
 
   return new ImageResponse(
     (
       <div
         style={{
+          position: "relative",
           width: "100%",
           height: "100%",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#0a0c0b",
+          background: l.badgeBg,
         }}
       >
         <div
           style={{
-            width: ring,
-            height: ring,
-            borderRadius: 999,
-            border: `${border}px solid #3ea86b`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            position: "absolute",
+            top: l.barTop,
+            left: l.topBarLeft,
+            width: l.topBarWidth,
+            height: l.barThickness,
+            borderRadius: l.barRadius,
+            background: l.barColor,
           }}
-        >
-          <div
-            style={{
-              width: dot,
-              height: dot,
-              borderRadius: 999,
-              background: "#4fd689",
-            }}
-          />
-        </div>
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: l.barTop,
+            left: l.vBarLeft,
+            width: l.barThickness,
+            height: l.vBarHeight,
+            borderRadius: l.barRadius,
+            background: l.barColor,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: l.dotTop,
+            right: l.dotRight,
+            width: l.dotSize,
+            height: l.dotSize,
+            borderRadius: 999,
+            background: l.accentColor,
+          }}
+        />
       </div>
     ),
     { width: size, height: size }

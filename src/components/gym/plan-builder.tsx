@@ -244,7 +244,7 @@ export function PlanBuilder({ initialPlan }: { initialPlan?: InitialPlan }) {
                   <button
                     type="button"
                     onClick={() => removeExercise(dayIndex, exIndex)}
-                    className="col-span-12 text-left text-[11px] text-foreground-muted hover:text-danger"
+                    className="col-span-12 text-left text-[12px] text-foreground-muted hover:text-danger"
                   >
                     Remove exercise
                   </button>

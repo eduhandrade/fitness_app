@@ -5,6 +5,7 @@ import { formatUtcDate, toIsoDateOnly } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StravaConnectionCard } from "@/components/settings/strava-connection-card";
 import { ProfileForm } from "@/components/settings/profile-form";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export default async function SettingsPage({
   searchParams,
@@ -33,6 +34,15 @@ export default async function SettingsPage({
           Strava connected successfully.
         </div>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ThemeToggle />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

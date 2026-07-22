@@ -19,7 +19,7 @@ export function SplitsTable({ splits }: { splits: Split[] }) {
     <div className="overflow-hidden rounded-xl border border-border">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border bg-surface-hover text-left text-[11px] text-foreground-muted">
+          <tr className="border-b border-border bg-surface-hover text-left text-[12px] text-foreground-muted">
             <th className="px-3 py-2 font-medium">Km</th>
             <th className="px-3 py-2 font-medium">Pace</th>
             <th className="px-3 py-2 font-medium">Time</th>

@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { deleteBodyMetric } from "@/app/(app)/body/actions";
+import { TrashIcon } from "@/components/icons";
 
 export type WeightEntry = {
   id: string;
@@ -36,9 +37,10 @@ export function WeightHistoryTable({ entries }: { entries: WeightEntry[] }) {
             type="button"
             disabled={isPending}
             onClick={() => startTransition(() => deleteBodyMetric(entry.id))}
-            className="text-xs font-medium text-foreground-muted hover:text-danger disabled:opacity-50"
+            aria-label="Delete entry"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-foreground-muted hover:bg-surface-hover hover:text-danger disabled:opacity-50"
           >
-            Delete
+            <TrashIcon className="h-4 w-4" />
           </button>
         </li>
       ))}

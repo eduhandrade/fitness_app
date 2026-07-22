@@ -114,7 +114,7 @@ export function MonthCalendar({ sessions }: { sessions: SessionWithDate[] }) {
 
       <div className="grid grid-cols-7 gap-1 text-center">
         {WEEKDAY_LABELS.map((label) => (
-          <div key={label} className="text-[10px] font-medium uppercase tracking-wide text-foreground-muted">
+          <div key={label} className="text-[11px] font-medium uppercase tracking-wide text-foreground-muted">
             {label}
           </div>
         ))}
@@ -147,7 +147,7 @@ export function MonthCalendar({ sessions }: { sessions: SessionWithDate[] }) {
 
       <div className="flex flex-wrap gap-3 px-0.5">
         {LEGEND_SPORTS.map((sport) => (
-          <span key={sport} className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
+          <span key={sport} className="flex items-center gap-1.5 text-[12px] text-foreground-muted">
             <span className="h-2 w-2 rounded-full" style={{ background: SPORT_META[sport].color }} />
             {SPORT_META[sport].label}
           </span>
@@ -159,7 +159,7 @@ export function MonthCalendar({ sessions }: { sessions: SessionWithDate[] }) {
           <p className="text-xs text-foreground-muted">Tap a day to see its session.</p>
         ) : (
           <>
-            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-foreground-muted">
+            <p className="mb-1 text-[12px] font-medium uppercase tracking-wide text-foreground-muted">
               {selectedLabel}
             </p>
             {selectedSessions.length === 0 ? (

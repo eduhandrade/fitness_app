@@ -114,7 +114,7 @@ export default async function DashboardPage() {
                   </span>
                 )}
               </p>
-              <TrendLineChart data={weightTrend} color="#4fd689" unit="kg" />
+              <TrendLineChart data={weightTrend} unit="kg" />
             </>
           ) : (
             <p className="text-sm text-foreground-muted">No weight logged yet.</p>

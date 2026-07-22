@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import Link from "next/link";
 import { setActiveGymPlan, deleteGymPlan } from "@/app/(app)/gym/actions";
+import { PencilIcon, TrashIcon } from "@/components/icons";
 
 export function GymPlanActions({
   planId,
@@ -21,13 +22,7 @@ export function GymPlanActions({
   return (
     <div className="flex items-center justify-between text-sm">
       <span className="text-foreground">{planName}</span>
-      <div className="flex gap-3">
-        <Link
-          href={`/gym/plan/${planId}/edit`}
-          className="text-xs font-medium text-primary-strong"
-        >
-          Edit
-        </Link>
+      <div className="flex items-center gap-1">
         <button
           type="button"
           disabled={isPending}
@@ -36,13 +31,21 @@ export function GymPlanActions({
         >
           Set active
         </button>
+        <Link
+          href={`/gym/plan/${planId}/edit`}
+          aria-label="Edit plan"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-foreground-muted hover:bg-surface-hover hover:text-primary-strong"
+        >
+          <PencilIcon className="h-4 w-4" />
+        </Link>
         <button
           type="button"
           disabled={isPending}
           onClick={handleDelete}
-          className="text-xs font-medium text-foreground-muted hover:text-danger disabled:opacity-50"
+          aria-label="Delete plan"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-foreground-muted hover:bg-surface-hover hover:text-danger disabled:opacity-50"
         >
-          Delete
+          <TrashIcon className="h-4 w-4" />
         </button>
       </div>
     </div>

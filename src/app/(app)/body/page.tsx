@@ -53,7 +53,7 @@ export default async function BodyPage() {
           )}
         </CardHeader>
         <CardContent>
-          <TrendLineChart data={chartData} color="#4fd689" unit="kg" />
+          <TrendLineChart data={chartData} unit="kg" />
         </CardContent>
       </Card>
 

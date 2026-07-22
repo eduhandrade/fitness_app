@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { cookies } from "next/headers";
+import { ThemeProvider, type Theme } from "@/components/theme/theme-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,22 +24,34 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
-  themeColor: "#0a0c0b",
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-};
+export async function generateViewport(): Promise<Viewport> {
+  const cookieStore = await cookies();
+  const theme = cookieStore.get("theme")?.value === "light" ? "light" : "dark";
 
-export default function RootLayout({
+  return {
+    themeColor: theme === "light" ? "#f6f8f5" : "#0a0c0b",
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const theme: Theme = cookieStore.get("theme")?.value === "light" ? "light" : "dark";
+
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      data-theme={theme}
+      className={`${inter.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
-        {children}
+        <ThemeProvider initialTheme={theme}>{children}</ThemeProvider>
       </body>
     </html>
   );

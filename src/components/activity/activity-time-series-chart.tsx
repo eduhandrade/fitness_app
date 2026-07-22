@@ -11,9 +11,16 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { formatDuration } from "@/lib/format";
+import { useTheme } from "@/components/theme/theme-provider";
+import { CHART_COLORS } from "@/lib/theme-colors";
 import type { TimeSeriesPoint } from "@/lib/activity-streams";
 
+const HEART_RATE_COLOR = "#d55181";
+
 export function ActivityTimeSeriesChart({ data }: { data: TimeSeriesPoint[] }) {
+  const { theme } = useTheme();
+  const c = CHART_COLORS[theme];
+
   if (data.length === 0) return null;
   const hasHr = data.some((d) => d.heartrate != null);
   const hasSpeed = data.some((d) => d.speedKmh != null);
@@ -22,21 +29,21 @@ export function ActivityTimeSeriesChart({ data }: { data: TimeSeriesPoint[] }) {
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke="#232b25" strokeDasharray="0" vertical={false} />
+          <CartesianGrid stroke={c.grid} strokeDasharray="0" vertical={false} />
           <XAxis
             dataKey="t"
-            stroke="#8a968c"
-            tick={{ fill: "#8a968c", fontSize: 11 }}
+            stroke={c.axis}
+            tick={{ fill: c.axis, fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: "#232b25" }}
+            axisLine={{ stroke: c.grid }}
             tickFormatter={(v) => formatDuration(Number(v))}
             minTickGap={32}
           />
           {hasSpeed && (
             <YAxis
               yAxisId="speed"
-              stroke="#3ea86b"
-              tick={{ fill: "#8a968c", fontSize: 11 }}
+              stroke={c.primary}
+              tick={{ fill: c.axis, fontSize: 11 }}
               tickLine={false}
               axisLine={false}
               width={36}
@@ -46,23 +53,23 @@ export function ActivityTimeSeriesChart({ data }: { data: TimeSeriesPoint[] }) {
             <YAxis
               yAxisId="hr"
               orientation="right"
-              stroke="#d55181"
-              tick={{ fill: "#8a968c", fontSize: 11 }}
+              stroke={HEART_RATE_COLOR}
+              tick={{ fill: c.axis, fontSize: 11 }}
               tickLine={false}
               axisLine={false}
               width={36}
             />
           )}
           <Tooltip
-            cursor={{ stroke: "#232b25", strokeWidth: 1 }}
+            cursor={{ stroke: c.grid, strokeWidth: 1 }}
             contentStyle={{
-              background: "#121613",
-              border: "1px solid #232b25",
+              background: c.tooltipBg,
+              border: `1px solid ${c.tooltipBorder}`,
               borderRadius: 10,
               fontSize: 12,
-              color: "#e9ede9",
+              color: c.tooltipText,
             }}
-            labelStyle={{ color: "#8a968c" }}
+            labelStyle={{ color: c.axis }}
             labelFormatter={(v) => formatDuration(Number(v))}
             formatter={(value, name) => {
               if (name === "Speed") return [`${Number(value).toFixed(1)} km/h`, name];
@@ -70,14 +77,14 @@ export function ActivityTimeSeriesChart({ data }: { data: TimeSeriesPoint[] }) {
               return [value, name];
             }}
           />
-          <Legend wrapperStyle={{ fontSize: 11, color: "#8a968c" }} />
+          <Legend wrapperStyle={{ fontSize: 11, color: c.axis }} />
           {hasSpeed && (
             <Line
               yAxisId="speed"
               type="monotone"
               dataKey="speedKmh"
               name="Speed"
-              stroke="#3ea86b"
+              stroke={c.primary}
               strokeWidth={2}
               dot={false}
               isAnimationActive={false}
@@ -90,7 +97,7 @@ export function ActivityTimeSeriesChart({ data }: { data: TimeSeriesPoint[] }) {
               type="monotone"
               dataKey="heartrate"
               name="Heart rate"
-              stroke="#d55181"
+              stroke={HEART_RATE_COLOR}
               strokeWidth={2}
               dot={false}
               isAnimationActive={false}

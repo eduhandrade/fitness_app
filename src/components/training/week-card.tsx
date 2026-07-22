@@ -45,7 +45,7 @@ export function WeekCard({ week }: { week: WeekCardData }) {
         <CardContent className="space-y-2 pt-0">
           {days.map(({ date, sessions }) => (
             <div key={date.toISOString()} className="border-t border-border pt-2 first:border-t-0 first:pt-0">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-foreground-muted">
+              <p className="text-[12px] font-medium uppercase tracking-wide text-foreground-muted">
                 {formatUtcDate(date, "long")}
               </p>
               {sessions.length === 0 ? (
