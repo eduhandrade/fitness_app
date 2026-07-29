@@ -32,6 +32,7 @@ const SPORT_LABEL: Record<Sport, string> = {
   SWIM: "swim",
   STRENGTH: "strength session",
   BRICK: "brick (ride + run)",
+  BIKE_TRAINER: "trainer ride",
   OTHER: "session",
 };
 

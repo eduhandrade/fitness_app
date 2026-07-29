@@ -76,7 +76,10 @@ export default async function ActivityDetailPage({
   }
   if (pace) {
     stats.push({
-      label: activity.sport === Sport.RIDE ? "Avg speed" : "Avg pace",
+      label:
+        activity.sport === Sport.RIDE || activity.sport === Sport.BIKE_TRAINER
+          ? "Avg speed"
+          : "Avg pace",
       value: pace,
     });
   }

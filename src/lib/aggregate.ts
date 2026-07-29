@@ -11,6 +11,7 @@ const ZERO_BY_SPORT: Record<Sport, number> = {
   SWIM: 0,
   STRENGTH: 0,
   BRICK: 0,
+  BIKE_TRAINER: 0,
   OTHER: 0,
 };
 

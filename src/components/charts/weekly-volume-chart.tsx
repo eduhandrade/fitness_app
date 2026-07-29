@@ -16,7 +16,13 @@ import { useTheme } from "@/components/theme/theme-provider";
 import { CHART_COLORS } from "@/lib/theme-colors";
 import type { WeeklyVolumePoint } from "@/lib/aggregate";
 
-const SPORTS_IN_CHART: Sport[] = [Sport.RUN, Sport.RIDE, Sport.SWIM, Sport.STRENGTH];
+const SPORTS_IN_CHART: Sport[] = [
+  Sport.RUN,
+  Sport.RIDE,
+  Sport.SWIM,
+  Sport.STRENGTH,
+  Sport.BIKE_TRAINER,
+];
 
 export function WeeklyVolumeChart({ data }: { data: WeeklyVolumePoint[] }) {
   const { theme } = useTheme();

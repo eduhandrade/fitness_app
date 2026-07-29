@@ -19,12 +19,13 @@ const FILTERS: { value: Sport | "ALL"; label: string }[] = [
   { value: Sport.RIDE, label: "Ride" },
   { value: Sport.SWIM, label: "Swim" },
   { value: Sport.STRENGTH, label: "Strength" },
+  { value: Sport.BIKE_TRAINER, label: "Trainer" },
 ];
 
 function secondaryMetric(sport: Sport, avgSpeedMs: number | null) {
   if (!avgSpeedMs) return null;
   if (sport === Sport.RUN) return formatPaceMinPerKm(avgSpeedMs);
-  if (sport === Sport.RIDE) return formatSpeedKmh(avgSpeedMs);
+  if (sport === Sport.RIDE || sport === Sport.BIKE_TRAINER) return formatSpeedKmh(avgSpeedMs);
   if (sport === Sport.SWIM) return formatPacePer100m(avgSpeedMs);
   return null;
 }

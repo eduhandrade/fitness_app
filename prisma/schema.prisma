@@ -20,12 +20,14 @@ enum Sport {
   SWIM
   STRENGTH
   BRICK
+  BIKE_TRAINER
   OTHER
 }
 
 enum ActivitySource {
   STRAVA
   MANUAL
+  TRAINER
 }
 
 enum AthleteLevel {
@@ -125,7 +127,10 @@ model Activity {
   maxHeartrate   Float?
   avgSpeedMs     Float?
   avgWatts       Float?
+  maxWatts       Float?
+  normalizedPower Float?
   avgCadence     Float?
+  maxCadence     Float?
   calories       Float?
   relativeEffort Float?
   mapPolyline    String?
@@ -134,9 +139,19 @@ model Activity {
 
   exerciseLogs         ExerciseLog[]
   linkedTrainingSession TrainingSession[]
+  streamSet            ActivityStreamSet?
 
   @@index([userId, startDate])
   @@index([userId, sport])
+}
+
+model ActivityStreamSet {
+  id         String   @id @default(cuid())
+  activityId String   @unique
+  activity   Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  sampleHz   Float
+  samples    Json
+  createdAt  DateTime @default(now())
 }
 
 model BodyMetric {
