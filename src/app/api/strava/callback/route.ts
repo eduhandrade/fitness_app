@@ -9,6 +9,12 @@ export async function GET(req: NextRequest) {
 
   const code = req.nextUrl.searchParams.get("code");
   const error = req.nextUrl.searchParams.get("error");
+  // Strava's redirect includes the scope it actually granted (separate from
+  // the token-exchange response) — persisting that real value, rather than
+  // the literal we requested, matters once features gate on scope contents
+  // (e.g. "activity:write" for uploads): a user who never approved the
+  // wider scope must see a clean "reconnect" prompt, not a silent failure.
+  const grantedScope = req.nextUrl.searchParams.get("scope");
 
   const settingsUrl = new URL("/settings", req.nextUrl.origin);
 
@@ -31,7 +37,7 @@ export async function GET(req: NextRequest) {
       accessTokenEnc: encryptSecret(token.access_token),
       refreshTokenEnc: encryptSecret(token.refresh_token),
       expiresAt: new Date(token.expires_at * 1000),
-      scope: "read,activity:read_all,profile:read_all",
+      scope: grantedScope ?? "",
     },
     create: {
       userId,
@@ -39,7 +45,7 @@ export async function GET(req: NextRequest) {
       accessTokenEnc: encryptSecret(token.access_token),
       refreshTokenEnc: encryptSecret(token.refresh_token),
       expiresAt: new Date(token.expires_at * 1000),
-      scope: "read,activity:read_all,profile:read_all",
+      scope: grantedScope ?? "",
     },
   });
 

@@ -16,7 +16,7 @@ export function buildStravaAuthorizeUrl(): string {
   url.searchParams.set("redirect_uri", requireEnv("STRAVA_REDIRECT_URI"));
   url.searchParams.set("response_type", "code");
   url.searchParams.set("approval_prompt", "auto");
-  url.searchParams.set("scope", "read,activity:read_all,profile:read_all");
+  url.searchParams.set("scope", "read,activity:read_all,activity:write,profile:read_all");
   return url.toString();
 }
 

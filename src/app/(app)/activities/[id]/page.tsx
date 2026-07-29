@@ -24,6 +24,7 @@ import type { TrainerStreamSample } from "@/lib/trainer/types";
 import { RouteMap } from "@/components/activity/route-map";
 import { SplitsTable } from "@/components/activity/splits-table";
 import { ActivityTimeSeriesChart } from "@/components/activity/activity-time-series-chart";
+import { SendToStravaButton } from "@/components/activity/send-to-strava-button";
 
 function paceLabel(sport: Sport, avgSpeedMs: number | null): string | null {
   if (!avgSpeedMs) return null;
@@ -145,6 +146,14 @@ export default async function ActivityDetailPage({
                 : "Manual entry"}
           </span>
         </div>
+        {activity.source === "TRAINER" && (
+          <div className="mt-3">
+            <SendToStravaButton
+              activityId={activity.id}
+              alreadySentStravaId={activity.stravaId}
+            />
+          </div>
+        )}
       </div>
 
       <Card>
