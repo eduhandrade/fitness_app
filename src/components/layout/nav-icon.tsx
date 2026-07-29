@@ -22,6 +22,13 @@ const PATHS: Record<NavItem["icon"], React.ReactNode> = {
   chart: (
     <path d="M4 20V10M10 20V4M16 20v-7M4 20h16" />
   ),
+  bike: (
+    <>
+      <circle cx="5.5" cy="17.5" r="3.3" />
+      <circle cx="18.2" cy="17.5" r="3.3" />
+      <path d="M5.5 17.5 10 8h4M18.2 17.5 13 9.5M8.7 13h6" />
+    </>
+  ),
 };
 
 export function NavIcon({
