@@ -1,11 +1,23 @@
-import type { StravaStreamSet } from "@/lib/strava";
+import type { TrainerStreamSample } from "@/lib/trainer/types";
+
+/** Generic time-series shape both Strava's streams API and our own
+ * persisted trainer-ride samples can satisfy — named distinctly from the
+ * Prisma `ActivityStreamSet` model (which is the DB row, not this shape). */
+export type StreamSeries = {
+  time?: { data: number[] };
+  distance?: { data: number[] };
+  velocity_smooth?: { data: number[] };
+  heartrate?: { data: number[] };
+  watts?: { data: number[] };
+  cadence?: { data: number[] };
+};
 
 export type Split = { km: number; distanceM: number; seconds: number };
 
-/** Per-km splits derived from Strava's distance/time streams. Handles a
- * final partial km and samples where multiple km thresholds are crossed
- * between two points. */
-export function computeKmSplits(streams: StravaStreamSet): Split[] {
+/** Per-km splits derived from distance/time streams. Handles a final
+ * partial km and samples where multiple km thresholds are crossed between
+ * two points. */
+export function computeKmSplits(streams: StreamSeries): Split[] {
   const distance = streams.distance?.data;
   const time = streams.time?.data;
   if (!distance || !time || distance.length < 2 || distance.length !== time.length) {
@@ -49,11 +61,18 @@ export function computeKmSplits(streams: StravaStreamSet): Split[] {
   return splits;
 }
 
-export type TimeSeriesPoint = { t: number; speedKmh?: number; heartrate?: number };
+export type TimeSeriesPoint = {
+  t: number;
+  speedKmh?: number;
+  heartrate?: number;
+  watts?: number;
+  cadenceRpm?: number;
+};
 
-/** Downsamples time/velocity/heartrate streams into chart-ready points. */
+/** Downsamples time/velocity/heartrate/watts/cadence streams into
+ * chart-ready points. */
 export function buildTimeSeriesPoints(
-  streams: StravaStreamSet,
+  streams: StreamSeries,
   maxPoints = 120
 ): TimeSeriesPoint[] {
   const time = streams.time?.data;
@@ -61,6 +80,8 @@ export function buildTimeSeriesPoints(
 
   const velocity = streams.velocity_smooth?.data;
   const heartrate = streams.heartrate?.data;
+  const watts = streams.watts?.data;
+  const cadence = streams.cadence?.data;
   const step = Math.max(1, Math.floor(time.length / maxPoints));
 
   const points: TimeSeriesPoint[] = [];
@@ -69,7 +90,29 @@ export function buildTimeSeriesPoints(
       t: time[i],
       speedKmh: velocity ? Math.round(velocity[i] * 3.6 * 10) / 10 : undefined,
       heartrate: heartrate ? Math.round(heartrate[i]) : undefined,
+      watts: watts ? Math.round(watts[i]) : undefined,
+      cadenceRpm: cadence ? Math.round(cadence[i]) : undefined,
     });
   }
   return points;
+}
+
+function seriesIfAnyPresent(values: (number | undefined)[]): { data: number[] } | undefined {
+  if (!values.some((v) => v != null)) return undefined;
+  return { data: values.map((v) => v ?? 0) };
+}
+
+/** Adapts our own persisted trainer-ride samples into the same shape the
+ * Strava-streams path already produces, so computeKmSplits/
+ * buildTimeSeriesPoints and the chart/splits components need no
+ * source-specific branching. */
+export function trainerSamplesToStreamSeries(samples: TrainerStreamSample[]): StreamSeries {
+  return {
+    time: { data: samples.map((s) => s.t) },
+    distance: seriesIfAnyPresent(samples.map((s) => s.distanceM)),
+    velocity_smooth: seriesIfAnyPresent(samples.map((s) => s.speedMs)),
+    heartrate: seriesIfAnyPresent(samples.map((s) => s.heartrateBpm)),
+    watts: seriesIfAnyPresent(samples.map((s) => s.watts)),
+    cadence: seriesIfAnyPresent(samples.map((s) => s.cadenceRpm)),
+  };
 }

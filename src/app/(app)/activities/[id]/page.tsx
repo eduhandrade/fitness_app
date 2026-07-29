@@ -13,8 +13,14 @@ import {
 import { SportBadge } from "@/components/sport-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getValidStravaAccessToken } from "@/lib/strava-connection";
-import { fetchActivityStreams, type StravaStreamSet } from "@/lib/strava";
-import { computeKmSplits, buildTimeSeriesPoints } from "@/lib/activity-streams";
+import { fetchActivityStreams } from "@/lib/strava";
+import {
+  computeKmSplits,
+  buildTimeSeriesPoints,
+  trainerSamplesToStreamSeries,
+  type StreamSeries,
+} from "@/lib/activity-streams";
+import type { TrainerStreamSample } from "@/lib/trainer/types";
 import { RouteMap } from "@/components/activity/route-map";
 import { SplitsTable } from "@/components/activity/splits-table";
 import { ActivityTimeSeriesChart } from "@/components/activity/activity-time-series-chart";
@@ -50,7 +56,7 @@ export default async function ActivityDetailPage({
 
   if (!activity) notFound();
 
-  let streams: StravaStreamSet | null = null;
+  let streams: StreamSeries | null = null;
   if (activity.source === "STRAVA" && activity.stravaId) {
     try {
       const accessToken = await getValidStravaAccessToken(userId);
@@ -59,6 +65,13 @@ export default async function ActivityDetailPage({
       }
     } catch {
       streams = null;
+    }
+  } else if (activity.source === "TRAINER") {
+    const streamSet = await prisma.activityStreamSet.findUnique({
+      where: { activityId: activity.id },
+    });
+    if (streamSet) {
+      streams = trainerSamplesToStreamSeries(streamSet.samples as TrainerStreamSample[]);
     }
   }
   const splits = streams ? computeKmSplits(streams) : [];
@@ -95,8 +108,17 @@ export default async function ActivityDetailPage({
   if (activity.avgWatts) {
     stats.push({ label: "Avg power", value: `${Math.round(activity.avgWatts)} W` });
   }
+  if (activity.maxWatts) {
+    stats.push({ label: "Max power", value: `${Math.round(activity.maxWatts)} W` });
+  }
+  if (activity.normalizedPower) {
+    stats.push({ label: "Normalized power", value: `${Math.round(activity.normalizedPower)} W` });
+  }
   if (activity.avgCadence) {
     stats.push({ label: "Avg cadence", value: `${Math.round(activity.avgCadence)} rpm` });
+  }
+  if (activity.maxCadence) {
+    stats.push({ label: "Max cadence", value: `${Math.round(activity.maxCadence)} rpm` });
   }
   if (activity.calories) {
     stats.push({ label: "Calories", value: `${Math.round(activity.calories)} kcal` });
@@ -115,7 +137,12 @@ export default async function ActivityDetailPage({
             {formatUtcDate(activity.startDate, "long")}
           </span>
           <span className="text-xs text-foreground-muted">
-            · {activity.source === "STRAVA" ? "Synced from Strava" : "Manual entry"}
+            ·{" "}
+            {activity.source === "STRAVA"
+              ? "Synced from Strava"
+              : activity.source === "TRAINER"
+                ? "Bike trainer ride"
+                : "Manual entry"}
           </span>
         </div>
       </div>
@@ -148,7 +175,9 @@ export default async function ActivityDetailPage({
       {chartPoints.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Pace &amp; heart rate</CardTitle>
+            <CardTitle>
+              {chartPoints.some((p) => p.watts != null) ? "Power & heart rate" : "Pace & heart rate"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ActivityTimeSeriesChart data={chartPoints} />

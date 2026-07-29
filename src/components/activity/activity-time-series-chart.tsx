@@ -23,7 +23,12 @@ export function ActivityTimeSeriesChart({ data }: { data: TimeSeriesPoint[] }) {
 
   if (data.length === 0) return null;
   const hasHr = data.some((d) => d.heartrate != null);
-  const hasSpeed = data.some((d) => d.speedKmh != null);
+  const hasWatts = data.some((d) => d.watts != null);
+  // Power is the more meaningful primary line for a trainer ride; only
+  // fall back to speed when there's no power data, to avoid cramming a
+  // third line onto a phone-width chart (cadence, when present, stays in
+  // the stat tiles instead).
+  const hasSpeed = !hasWatts && data.some((d) => d.speedKmh != null);
 
   return (
     <div className="h-56 w-full">
@@ -39,9 +44,9 @@ export function ActivityTimeSeriesChart({ data }: { data: TimeSeriesPoint[] }) {
             tickFormatter={(v) => formatDuration(Number(v))}
             minTickGap={32}
           />
-          {hasSpeed && (
+          {(hasWatts || hasSpeed) && (
             <YAxis
-              yAxisId="speed"
+              yAxisId="primary"
               stroke={c.primary}
               tick={{ fill: c.axis, fontSize: 11 }}
               tickLine={false}
@@ -72,15 +77,29 @@ export function ActivityTimeSeriesChart({ data }: { data: TimeSeriesPoint[] }) {
             labelStyle={{ color: c.axis }}
             labelFormatter={(v) => formatDuration(Number(v))}
             formatter={(value, name) => {
+              if (name === "Power") return [`${Math.round(Number(value))} W`, name];
               if (name === "Speed") return [`${Number(value).toFixed(1)} km/h`, name];
               if (name === "Heart rate") return [`${Math.round(Number(value))} bpm`, name];
               return [value, name];
             }}
           />
           <Legend wrapperStyle={{ fontSize: 11, color: c.axis }} />
+          {hasWatts && (
+            <Line
+              yAxisId="primary"
+              type="monotone"
+              dataKey="watts"
+              name="Power"
+              stroke={c.primary}
+              strokeWidth={2}
+              dot={false}
+              isAnimationActive={false}
+              connectNulls
+            />
+          )}
           {hasSpeed && (
             <Line
-              yAxisId="speed"
+              yAxisId="primary"
               type="monotone"
               dataKey="speedKmh"
               name="Speed"
