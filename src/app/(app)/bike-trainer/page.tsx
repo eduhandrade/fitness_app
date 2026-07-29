@@ -5,6 +5,7 @@ import { formatUtcDate } from "@/lib/date";
 import { formatDistanceKm, formatDuration } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BikeTrainerLauncher } from "@/components/bike-trainer/bike-trainer-launcher";
+import { DeleteRideButton } from "@/components/bike-trainer/delete-ride-button";
 
 export default async function BikeTrainerPage() {
   const userId = await requireUserId();
@@ -33,11 +34,8 @@ export default async function BikeTrainerPage() {
           <CardContent className="p-0">
             <ul className="divide-y divide-border">
               {recentRides.map((a) => (
-                <li key={a.id}>
-                  <Link
-                    href={`/activities/${a.id}`}
-                    className="flex items-center justify-between px-4 py-3 hover:bg-surface-hover"
-                  >
+                <li key={a.id} className="flex items-center gap-2 px-4 py-3 hover:bg-surface-hover">
+                  <Link href={`/activities/${a.id}`} className="flex min-w-0 flex-1 items-center justify-between">
                     <div className="min-w-0">
                       <p className="truncate text-sm text-foreground">{a.name}</p>
                       <p className="text-xs text-foreground-muted">
@@ -49,6 +47,7 @@ export default async function BikeTrainerPage() {
                       <p>{formatDuration(a.movingTimeSec)}</p>
                     </div>
                   </Link>
+                  <DeleteRideButton activityId={a.id} rideName={a.name} />
                 </li>
               ))}
             </ul>

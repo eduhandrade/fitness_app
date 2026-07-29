@@ -367,6 +367,15 @@ export function RideSession() {
     setPhase("finished");
   }
 
+  function handleDiscard() {
+    if (!confirm("Discard this ride? It will not be saved.")) return;
+    samplesRef.current = [];
+    setSummary(null);
+    setRideName("Bike trainer ride");
+    setRideNotes("");
+    router.push("/bike-trainer");
+  }
+
   async function handleSave() {
     if (!summary) return;
     setIsSaving(true);
@@ -556,9 +565,19 @@ export function RideSession() {
             />
           </div>
 
-          <Button className="w-full" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving…" : "Save ride"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={handleDiscard}
+              disabled={isSaving}
+            >
+              Discard
+            </Button>
+            <Button className="w-full" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? "Saving…" : "Save ride"}
+            </Button>
+          </div>
         </div>
       )}
     </div>

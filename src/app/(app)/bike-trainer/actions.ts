@@ -82,3 +82,15 @@ export async function saveTrainerRide(
 
   return { activityId: activity.id };
 }
+
+export async function deleteTrainerRide(activityId: string): Promise<void> {
+  const userId = await requireUserId();
+  await prisma.activity.delete({
+    where: { id: activityId, userId, source: "TRAINER" },
+  });
+
+  revalidatePath("/activities");
+  revalidatePath("/bike-trainer");
+  revalidatePath("/progress");
+  revalidatePath("/");
+}
