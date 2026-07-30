@@ -9,10 +9,16 @@ export type RoutePoint = {
 };
 
 const RESAMPLE_INTERVAL_M = 20;
-/** Moving-average radius in resampled points either side — at a 20m
- * resample interval this smooths over a ~100m window, enough to keep raw
- * GPS elevation noise from making the trainer's resistance chatter. */
-const GRADE_SMOOTHING_RADIUS = 2;
+/** Real-world GPX exports vary a lot in elevation precision: a recorded
+ * ride's GPS/barometric trace is often rounded to whole meters, which
+ * (divided by only ~20m of horizontal spacing) can read as a 10%+ grade
+ * for a single rounding step even on a street that's actually gentle —
+ * confirmed against a real Strava activity export where the app initially
+ * simulated -7% to -12% swings in the first 500m of an otherwise-flat
+ * route. 200m keeps that quantization noise from reaching the trainer
+ * while still preserving genuine multi-hundred-meter climbs/descents. */
+const GRADE_SMOOTHING_WINDOW_M = 200;
+const GRADE_SMOOTHING_RADIUS = Math.round(GRADE_SMOOTHING_WINDOW_M / RESAMPLE_INTERVAL_M / 2);
 const EARTH_RADIUS_M = 6_371_000;
 
 function toRad(deg: number): number {
