@@ -146,7 +146,8 @@ export default async function ActivityDetailPage({
                 : "Manual entry"}
           </span>
         </div>
-        {activity.source === "TRAINER" && (
+        {(activity.source === "TRAINER" ||
+          (activity.source === "MANUAL" && activity.sport === "STRENGTH")) && (
           <div className="mt-3">
             <SendToStravaButton
               activityId={activity.id}

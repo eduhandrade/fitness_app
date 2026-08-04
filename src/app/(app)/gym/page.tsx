@@ -8,6 +8,7 @@ import { ExerciseProgressPicker } from "@/components/gym/exercise-progress-picke
 import { GymPlanActions } from "@/components/gym/gym-plan-actions";
 import { DeletePlanButton } from "@/components/gym/delete-plan-button";
 import { PencilIcon } from "@/components/icons";
+import { classifyExercise } from "@/lib/gym/muscle-groups";
 import type { TrendPoint } from "@/components/charts/trend-line-chart";
 
 export default async function GymPage() {
@@ -102,12 +103,20 @@ export default async function GymPage() {
                   </Link>
                 </div>
                 <ul className="space-y-1">
-                  {day.exercises.map((ex) => (
-                    <li key={ex.id} className="text-xs text-foreground-muted">
-                      {ex.name} — {ex.targetSets}×{ex.targetReps}
-                      {ex.targetWeightKg ? ` @ ${ex.targetWeightKg}kg` : ""}
-                    </li>
-                  ))}
+                  {day.exercises.map((ex) => {
+                    const classification = classifyExercise(ex.name);
+                    return (
+                      <li key={ex.id} className="text-xs text-foreground-muted">
+                        {ex.name} — {ex.targetSets}×{ex.targetReps}
+                        {ex.targetWeightKg ? ` @ ${ex.targetWeightKg}kg` : ""}
+                        {classification && (
+                          <span className="ml-1.5 text-primary-strong">
+                            · {classification.label}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}

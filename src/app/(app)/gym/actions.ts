@@ -180,6 +180,7 @@ const loggedSetSchema = z.object({
 
 const logSessionSchema = z.object({
   dayId: z.string().min(1),
+  movingTimeSec: z.coerce.number().int().min(0).max(6 * 3600).optional(),
   entries: z.array(
     z.object({
       exerciseId: z.string().min(1),
@@ -190,7 +191,9 @@ const logSessionSchema = z.object({
 
 export type LogGymSessionInput = z.infer<typeof logSessionSchema>;
 
-export async function logGymSession(input: LogGymSessionInput) {
+export async function logGymSession(
+  input: LogGymSessionInput
+): Promise<{ activityId: string }> {
   const userId = await requireUserId();
   const parsed = logSessionSchema.parse(input);
 
@@ -198,15 +201,17 @@ export async function logGymSession(input: LogGymSessionInput) {
     where: { id: parsed.dayId, plan: { userId } },
   });
 
-  await prisma.activity.create({
+  const movingTimeSec = parsed.movingTimeSec ?? 0;
+
+  const activity = await prisma.activity.create({
     data: {
       userId,
       source: "MANUAL",
       sport: "STRENGTH",
       name: day.name,
       startDate: new Date(),
-      movingTimeSec: 0,
-      elapsedTimeSec: 0,
+      movingTimeSec,
+      elapsedTimeSec: movingTimeSec,
       exerciseLogs: {
         create: parsed.entries.flatMap((entry) =>
           entry.sets.map((set, index) => ({
@@ -222,4 +227,6 @@ export async function logGymSession(input: LogGymSessionInput) {
 
   revalidatePath("/gym");
   revalidatePath("/activities");
+
+  return { activityId: activity.id };
 }

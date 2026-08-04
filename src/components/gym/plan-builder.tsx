@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createGymPlan, updateGymPlan } from "@/app/(app)/gym/actions";
+import { classifyExercise } from "@/lib/gym/muscle-groups";
+import { ChevronUpIcon, ChevronDownIcon } from "@/components/icons";
 
 type ExerciseDraft = {
   id?: string;
@@ -107,6 +109,19 @@ export function PlanBuilder({ initialPlan }: { initialPlan?: InitialPlan }) {
     );
   }
 
+  function moveExercise(dayIndex: number, exIndex: number, direction: -1 | 1) {
+    setDays((prev) =>
+      prev.map((d, i) => {
+        if (i !== dayIndex) return d;
+        const target = exIndex + direction;
+        if (target < 0 || target >= d.exercises.length) return d;
+        const exercises = [...d.exercises];
+        [exercises[exIndex], exercises[target]] = [exercises[target], exercises[exIndex]];
+        return { ...d, exercises };
+      })
+    );
+  }
+
   function addDay() {
     setDays((prev) => [...prev, emptyDay(`Day ${prev.length + 1}`)]);
   }
@@ -194,63 +209,92 @@ export function PlanBuilder({ initialPlan }: { initialPlan?: InitialPlan }) {
           </div>
 
           <div className="space-y-2">
-            {day.exercises.map((ex, exIndex) => (
-              <div key={exIndex} className="grid grid-cols-12 gap-1.5 items-center">
-                <input
-                  value={ex.name}
-                  onChange={(e) =>
-                    updateExercise(dayIndex, exIndex, { name: e.target.value })
-                  }
-                  placeholder="Exercise name"
-                  className="col-span-6 rounded-lg border border-border bg-surface-hover px-2 py-1.5 text-xs outline-none focus:border-primary"
-                />
-                <input
-                  type="number"
-                  min={1}
-                  value={ex.targetSets}
-                  onChange={(e) =>
-                    updateExercise(dayIndex, exIndex, {
-                      targetSets: Number(e.target.value),
-                    })
-                  }
-                  placeholder="Sets"
-                  className="col-span-2 rounded-lg border border-border bg-surface-hover px-2 py-1.5 text-xs outline-none focus:border-primary"
-                />
-                <input
-                  type="number"
-                  min={1}
-                  value={ex.targetReps}
-                  onChange={(e) =>
-                    updateExercise(dayIndex, exIndex, {
-                      targetReps: Number(e.target.value),
-                    })
-                  }
-                  placeholder="Reps"
-                  className="col-span-2 rounded-lg border border-border bg-surface-hover px-2 py-1.5 text-xs outline-none focus:border-primary"
-                />
-                <input
-                  type="number"
-                  min={0}
-                  value={ex.targetWeightKg}
-                  onChange={(e) =>
-                    updateExercise(dayIndex, exIndex, {
-                      targetWeightKg: e.target.value,
-                    })
-                  }
-                  placeholder="kg"
-                  className="col-span-2 rounded-lg border border-border bg-surface-hover px-2 py-1.5 text-xs outline-none focus:border-primary"
-                />
-                {day.exercises.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeExercise(dayIndex, exIndex)}
-                    className="col-span-12 text-left text-[12px] text-foreground-muted hover:text-danger"
-                  >
-                    Remove exercise
-                  </button>
-                )}
-              </div>
-            ))}
+            {day.exercises.map((ex, exIndex) => {
+              const classification = ex.name.trim() ? classifyExercise(ex.name) : null;
+              return (
+                <div key={exIndex} className="grid grid-cols-12 gap-1.5 items-center">
+                  <div className="col-span-1 flex flex-col items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => moveExercise(dayIndex, exIndex, -1)}
+                      disabled={exIndex === 0}
+                      aria-label="Move exercise up"
+                      className="flex h-4 w-6 items-center justify-center text-foreground-muted hover:text-primary-strong disabled:opacity-30"
+                    >
+                      <ChevronUpIcon className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveExercise(dayIndex, exIndex, 1)}
+                      disabled={exIndex === day.exercises.length - 1}
+                      aria-label="Move exercise down"
+                      className="flex h-4 w-6 items-center justify-center text-foreground-muted hover:text-primary-strong disabled:opacity-30"
+                    >
+                      <ChevronDownIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <input
+                    value={ex.name}
+                    onChange={(e) =>
+                      updateExercise(dayIndex, exIndex, { name: e.target.value })
+                    }
+                    placeholder="Exercise name"
+                    className="col-span-5 rounded-lg border border-border bg-surface-hover px-2 py-1.5 text-xs outline-none focus:border-primary"
+                  />
+                  <input
+                    type="number"
+                    min={1}
+                    value={ex.targetSets}
+                    onChange={(e) =>
+                      updateExercise(dayIndex, exIndex, {
+                        targetSets: Number(e.target.value),
+                      })
+                    }
+                    placeholder="Sets"
+                    className="col-span-2 rounded-lg border border-border bg-surface-hover px-2 py-1.5 text-xs outline-none focus:border-primary"
+                  />
+                  <input
+                    type="number"
+                    min={1}
+                    value={ex.targetReps}
+                    onChange={(e) =>
+                      updateExercise(dayIndex, exIndex, {
+                        targetReps: Number(e.target.value),
+                      })
+                    }
+                    placeholder="Reps"
+                    className="col-span-2 rounded-lg border border-border bg-surface-hover px-2 py-1.5 text-xs outline-none focus:border-primary"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    value={ex.targetWeightKg}
+                    onChange={(e) =>
+                      updateExercise(dayIndex, exIndex, {
+                        targetWeightKg: e.target.value,
+                      })
+                    }
+                    placeholder="kg"
+                    className="col-span-2 rounded-lg border border-border bg-surface-hover px-2 py-1.5 text-xs outline-none focus:border-primary"
+                  />
+                  <div className="col-span-1" />
+                  {classification && (
+                    <span className="col-span-11 col-start-2 text-[11px] text-primary-strong">
+                      {classification.label}
+                    </span>
+                  )}
+                  {day.exercises.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeExercise(dayIndex, exIndex)}
+                      className="col-span-11 col-start-2 text-left text-[12px] text-foreground-muted hover:text-danger"
+                    >
+                      Remove exercise
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <button
