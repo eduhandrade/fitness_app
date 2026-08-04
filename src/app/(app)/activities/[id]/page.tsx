@@ -25,6 +25,9 @@ import { RouteMap } from "@/components/activity/route-map";
 import { SplitsTable } from "@/components/activity/splits-table";
 import { ActivityTimeSeriesChart } from "@/components/activity/activity-time-series-chart";
 import { SendToStravaButton } from "@/components/activity/send-to-strava-button";
+import { ExerciseBreakdown } from "@/components/gym/exercise-breakdown";
+import { MuscleGroupDiagram } from "@/components/gym/muscle-group-diagram";
+import { classifyExercise, type MuscleGroup } from "@/lib/gym/muscle-groups";
 
 function paceLabel(sport: Sport, avgSpeedMs: number | null): string | null {
   if (!avgSpeedMs) return null;
@@ -78,6 +81,45 @@ export default async function ActivityDetailPage({
   const splits = streams ? computeKmSplits(streams) : [];
   const chartPoints = streams ? buildTimeSeriesPoints(streams) : [];
 
+  let exerciseBreakdown: { exerciseId: string; name: string; sets: { setNumber: number; reps: number; weightKg: number }[] }[] = [];
+  let muscleGroupsWorked: MuscleGroup[] = [];
+  let totalSets = 0;
+  let totalReps = 0;
+  let totalVolumeKg = 0;
+
+  if (activity.source === "MANUAL" && activity.sport === "STRENGTH") {
+    const logs = await prisma.exerciseLog.findMany({
+      where: { activityId: activity.id },
+      include: { exercise: { select: { id: true, name: true, order: true } } },
+      orderBy: [{ exercise: { order: "asc" } }, { setNumber: "asc" }],
+    });
+
+    const byExercise = new Map<string, { name: string; order: number; sets: { setNumber: number; reps: number; weightKg: number }[] }>();
+    const groupsSeen = new Set<MuscleGroup>();
+    for (const log of logs) {
+      totalSets += 1;
+      totalReps += log.reps;
+      totalVolumeKg += log.reps * log.weightKg;
+
+      if (!byExercise.has(log.exerciseId)) {
+        byExercise.set(log.exerciseId, { name: log.exercise.name, order: log.exercise.order, sets: [] });
+      }
+      byExercise.get(log.exerciseId)!.sets.push({
+        setNumber: log.setNumber,
+        reps: log.reps,
+        weightKg: log.weightKg,
+      });
+
+      const classification = classifyExercise(log.exercise.name);
+      if (classification) groupsSeen.add(classification.group);
+    }
+
+    exerciseBreakdown = [...byExercise.entries()]
+      .sort((a, b) => a[1].order - b[1].order)
+      .map(([exerciseId, data]) => ({ exerciseId, name: data.name, sets: data.sets }));
+    muscleGroupsWorked = [...groupsSeen];
+  }
+
   const pace = paceLabel(activity.sport, activity.avgSpeedMs);
   const stats: { label: string; value: string }[] = [];
 
@@ -124,6 +166,13 @@ export default async function ActivityDetailPage({
   if (activity.calories) {
     stats.push({ label: "Calories", value: `${Math.round(activity.calories)} kcal` });
   }
+  if (totalSets > 0) {
+    stats.push({ label: "Total sets", value: `${totalSets}` });
+    stats.push({ label: "Total reps", value: `${totalReps}` });
+    if (totalVolumeKg > 0) {
+      stats.push({ label: "Total volume", value: `${Math.round(totalVolumeKg)} kg` });
+    }
+  }
   if (activity.relativeEffort) {
     stats.push({ label: "Relative effort", value: `${Math.round(activity.relativeEffort)}` });
   }
@@ -169,6 +218,28 @@ export default async function ActivityDetailPage({
         <p className="text-sm text-foreground-muted">
           No additional metrics available for this activity.
         </p>
+      )}
+
+      {muscleGroupsWorked.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Muscle groups worked</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MuscleGroupDiagram groups={muscleGroupsWorked} />
+          </CardContent>
+        </Card>
+      )}
+
+      {exerciseBreakdown.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Exercises</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExerciseBreakdown entries={exerciseBreakdown} />
+          </CardContent>
+        </Card>
       )}
 
       {activity.mapPolyline && (

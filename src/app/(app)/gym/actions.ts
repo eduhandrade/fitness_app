@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
+import { estimateStrengthCalories } from "@/lib/gym/calories";
 
 const exerciseSchema = z.object({
   id: z.string().min(1).optional(),
@@ -197,11 +198,22 @@ export async function logGymSession(
   const userId = await requireUserId();
   const parsed = logSessionSchema.parse(input);
 
-  const day = await prisma.gymPlanDay.findFirstOrThrow({
-    where: { id: parsed.dayId, plan: { userId } },
-  });
+  const [day, latestBodyMetric] = await Promise.all([
+    prisma.gymPlanDay.findFirstOrThrow({
+      where: { id: parsed.dayId, plan: { userId } },
+    }),
+    prisma.bodyMetric.findFirst({
+      where: { userId },
+      orderBy: { date: "desc" },
+      select: { weightKg: true },
+    }),
+  ]);
 
   const movingTimeSec = parsed.movingTimeSec ?? 0;
+  const calories =
+    movingTimeSec > 0
+      ? estimateStrengthCalories(movingTimeSec / 60, latestBodyMetric?.weightKg)
+      : undefined;
 
   const activity = await prisma.activity.create({
     data: {
@@ -212,6 +224,7 @@ export async function logGymSession(
       startDate: new Date(),
       movingTimeSec,
       elapsedTimeSec: movingTimeSec,
+      calories,
       exerciseLogs: {
         create: parsed.entries.flatMap((entry) =>
           entry.sets.map((set, index) => ({
