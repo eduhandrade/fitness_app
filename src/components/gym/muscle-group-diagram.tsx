@@ -1,132 +1,143 @@
 import type { MuscleGroup } from "@/lib/gym/muscle-groups";
 
-/** Simplified front/back body silhouettes with highlighted regions for the
- * muscle groups worked in a session — same idea as Strava's strength
- * training body map, hand-rolled as inline SVG shapes (rects/ellipses, not
- * anatomically precise paths) rather than a diagram library, matching this
- * app's existing style of small self-contained SVG components (route-map,
- * elevation-strip). */
+/** Front/back body silhouettes highlighting the muscle groups worked in a
+ * session — same idea as Strava's strength-training muscle map. Built as
+ * one continuous neutral "body" silhouette (head, torso, arms, legs, all in
+ * the same muted tone so it reads as a single human figure, not floating
+ * pieces), with a colored region layered on top for each muscle group that
+ * was actually worked — unworked groups simply show the plain body
+ * underneath rather than an empty outline, which is what made the first
+ * version look like disconnected blobs instead of a body. Hand-rolled
+ * inline SVG (no diagram library), matching this app's existing small
+ * self-contained SVG components (route-map, elevation-strip). */
 
-type ShapeKind = "rect" | "ellipse";
-type Shape = {
-  id: string;
-  kind: ShapeKind;
-  // rect
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-  rx?: number;
-  // ellipse
-  cx?: number;
-  cy?: number;
-  ry?: number;
-};
+const BODY_FILL = "var(--surface-hover)";
+const BODY_STROKE = "var(--border)";
+const HIGHLIGHT_FILL = "var(--primary)";
 
-const FRONT_SHAPES: Shape[] = [
-  { id: "chest", kind: "rect", x: 34, y: 40, width: 32, height: 26, rx: 8 },
-  { id: "abs", kind: "rect", x: 35, y: 68, width: 30, height: 32, rx: 6 },
-  { id: "shoulderLeft", kind: "ellipse", cx: 24, cy: 44, rx: 8, ry: 9 },
-  { id: "shoulderRight", kind: "ellipse", cx: 76, cy: 44, rx: 8, ry: 9 },
-  { id: "upperArmLeft", kind: "rect", x: 14, y: 54, width: 12, height: 32, rx: 6 },
-  { id: "upperArmRight", kind: "rect", x: 74, y: 54, width: 12, height: 32, rx: 6 },
-  { id: "thighLeft", kind: "rect", x: 34, y: 102, width: 15, height: 48, rx: 7 },
-  { id: "thighRight", kind: "rect", x: 51, y: 102, width: 15, height: 48, rx: 7 },
-];
+type RoundedRect = { x: number; y: number; width: number; height: number; rx: number };
+type Ellipse = { cx: number; cy: number; rx: number; ry: number };
 
-const FRONT_OUTLINE_ONLY: Shape[] = [
-  { id: "forearmLeft", kind: "rect", x: 13, y: 86, width: 10, height: 30, rx: 5 },
-  { id: "forearmRight", kind: "rect", x: 77, y: 86, width: 10, height: 30, rx: 5 },
-  { id: "shinLeft", kind: "rect", x: 35, y: 152, width: 12, height: 45, rx: 6 },
-  { id: "shinRight", kind: "rect", x: 53, y: 152, width: 12, height: 45, rx: 6 },
-];
+// Base silhouette pieces, shared by both views — a continuous figure (head,
+// neck, torso, arms, legs) drawn in one neutral tone.
+const HEAD: Ellipse = { cx: 60, cy: 18, rx: 14, ry: 15 };
+const NECK: RoundedRect = { x: 52, y: 30, width: 16, height: 10, rx: 3 };
+const TORSO_PATH =
+  "M31,42 L89,42 C95,58 93,74 87,86 C91,96 91,106 87,117 L33,117 " +
+  "C29,106 29,96 33,86 C27,74 25,58 31,42 Z";
+const SHOULDER_L: Ellipse = { cx: 22, cy: 48, rx: 11, ry: 12 };
+const SHOULDER_R: Ellipse = { cx: 98, cy: 48, rx: 11, ry: 12 };
+const UPPER_ARM_L: RoundedRect = { x: 10, y: 58, width: 16, height: 38, rx: 8 };
+const UPPER_ARM_R: RoundedRect = { x: 94, y: 58, width: 16, height: 38, rx: 8 };
+const FOREARM_L: RoundedRect = { x: 11, y: 98, width: 13, height: 36, rx: 6 };
+const FOREARM_R: RoundedRect = { x: 96, y: 98, width: 13, height: 36, rx: 6 };
+const THIGH_L: RoundedRect = { x: 34, y: 118, width: 20, height: 58, rx: 10 };
+const THIGH_R: RoundedRect = { x: 66, y: 118, width: 20, height: 58, rx: 10 };
+const SHIN_L: RoundedRect = { x: 36, y: 178, width: 16, height: 54, rx: 8 };
+const SHIN_R: RoundedRect = { x: 68, y: 178, width: 16, height: 54, rx: 8 };
 
-const BACK_SHAPES: Shape[] = [
-  { id: "traps", kind: "rect", x: 40, y: 38, width: 20, height: 12, rx: 5 },
-  { id: "lats", kind: "rect", x: 34, y: 48, width: 32, height: 30, rx: 8 },
-  { id: "shoulderLeft", kind: "ellipse", cx: 24, cy: 44, rx: 8, ry: 9 },
-  { id: "shoulderRight", kind: "ellipse", cx: 76, cy: 44, rx: 8, ry: 9 },
-  { id: "upperArmLeft", kind: "rect", x: 14, y: 54, width: 12, height: 32, rx: 6 },
-  { id: "upperArmRight", kind: "rect", x: 74, y: 54, width: 12, height: 32, rx: 6 },
-  { id: "glutes", kind: "rect", x: 36, y: 100, width: 28, height: 16, rx: 8 },
-  { id: "hamstringLeft", kind: "rect", x: 34, y: 118, width: 15, height: 32, rx: 7 },
-  { id: "hamstringRight", kind: "rect", x: 51, y: 118, width: 15, height: 32, rx: 7 },
-  { id: "calfLeft", kind: "rect", x: 35, y: 152, width: 12, height: 45, rx: 6 },
-  { id: "calfRight", kind: "rect", x: 53, y: 152, width: 12, height: 45, rx: 6 },
-];
+// Highlight overlays, inset within the base silhouette pieces above.
+const CHEST: RoundedRect = { x: 38, y: 46, width: 44, height: 26, rx: 10 };
+const ABS: RoundedRect = { x: 42, y: 78, width: 36, height: 34, rx: 8 };
+const TRAPS: RoundedRect = { x: 44, y: 34, width: 32, height: 12, rx: 5 };
+const LATS: RoundedRect = { x: 36, y: 48, width: 48, height: 40, rx: 10 };
+const GLUTES: RoundedRect = { x: 38, y: 112, width: 44, height: 18, rx: 9 };
 
-const BACK_OUTLINE_ONLY: Shape[] = [
-  { id: "forearmLeft", kind: "rect", x: 13, y: 86, width: 10, height: 30, rx: 5 },
-  { id: "forearmRight", kind: "rect", x: 77, y: 86, width: 10, height: 30, rx: 5 },
-];
+function rect(r: RoundedRect, fill: string, opacity = 1) {
+  return <rect x={r.x} y={r.y} width={r.width} height={r.height} rx={r.rx} fill={fill} opacity={opacity} />;
+}
 
-const OLYMPIC_FULL_BODY = {
-  front: ["chest", "abs", "thighLeft", "thighRight", "shoulderLeft", "shoulderRight"],
-  back: ["traps", "lats", "glutes", "hamstringLeft", "hamstringRight", "shoulderLeft", "shoulderRight"],
-};
+function ellipse(e: Ellipse, fill: string, opacity = 1) {
+  return <ellipse cx={e.cx} cy={e.cy} rx={e.rx} ry={e.ry} fill={fill} opacity={opacity} />;
+}
 
-const GROUP_TO_SHAPES: Record<MuscleGroup, { front: string[]; back: string[] }> = {
-  chest: { front: ["chest"], back: [] },
-  back: { front: [], back: ["traps", "lats"] },
-  legs: { front: ["thighLeft", "thighRight"], back: [] },
-  posterior: { front: [], back: ["glutes", "hamstringLeft", "hamstringRight"] },
-  shoulders: { front: ["shoulderLeft", "shoulderRight"], back: ["shoulderLeft", "shoulderRight"] },
-  biceps: { front: ["upperArmLeft", "upperArmRight"], back: [] },
-  triceps: { front: [], back: ["upperArmLeft", "upperArmRight"] },
-  calves: { front: [], back: ["calfLeft", "calfRight"] },
-  core: { front: ["abs"], back: [] },
-  cardio: { front: [], back: [] },
-  olympic: OLYMPIC_FULL_BODY,
-  fullBody: OLYMPIC_FULL_BODY,
-};
-
-function renderShape(shape: Shape, highlighted: boolean) {
-  const fill = highlighted ? "var(--primary)" : "none";
-  const stroke = highlighted ? "var(--primary)" : "var(--border)";
-  const commonProps = { fill, stroke, strokeWidth: 1.5, opacity: highlighted ? 0.85 : 1 };
-  if (shape.kind === "ellipse") {
-    return (
-      <ellipse
-        key={shape.id}
-        cx={shape.cx}
-        cy={shape.cy}
-        rx={shape.rx}
-        ry={shape.ry}
-        {...commonProps}
-      />
-    );
-  }
+function BaseBody() {
   return (
-    <rect
-      key={shape.id}
-      x={shape.x}
-      y={shape.y}
-      width={shape.width}
-      height={shape.height}
-      rx={shape.rx}
-      {...commonProps}
-    />
+    <g stroke={BODY_STROKE} strokeWidth={1.25}>
+      {rect(SHIN_L, BODY_FILL)}
+      {rect(SHIN_R, BODY_FILL)}
+      {rect(THIGH_L, BODY_FILL)}
+      {rect(THIGH_R, BODY_FILL)}
+      {rect(FOREARM_L, BODY_FILL)}
+      {rect(FOREARM_R, BODY_FILL)}
+      <path d={TORSO_PATH} fill={BODY_FILL} />
+      {ellipse(SHOULDER_L, BODY_FILL)}
+      {ellipse(SHOULDER_R, BODY_FILL)}
+      {rect(UPPER_ARM_L, BODY_FILL)}
+      {rect(UPPER_ARM_R, BODY_FILL)}
+      {rect(NECK, BODY_FILL)}
+      {ellipse(HEAD, BODY_FILL)}
+    </g>
   );
 }
 
-function BodySilhouette({
-  shapes,
-  outlineOnly,
-  highlightedIds,
-  label,
-}: {
-  shapes: Shape[];
-  outlineOnly: Shape[];
-  highlightedIds: Set<string>;
-  label: string;
-}) {
+type GroupOverlay = { view: "front" | "back"; render: (opacity: number) => React.ReactNode };
+
+const GROUP_OVERLAYS: Record<MuscleGroup, GroupOverlay[]> = {
+  chest: [{ view: "front", render: (o) => rect(CHEST, HIGHLIGHT_FILL, o) }],
+  back: [
+    { view: "back", render: (o) => rect(TRAPS, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => rect(LATS, HIGHLIGHT_FILL, o) },
+  ],
+  legs: [
+    { view: "front", render: (o) => rect(THIGH_L, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => rect(THIGH_R, HIGHLIGHT_FILL, o) },
+  ],
+  posterior: [
+    { view: "back", render: (o) => rect(GLUTES, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => rect(THIGH_L, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => rect(THIGH_R, HIGHLIGHT_FILL, o) },
+  ],
+  shoulders: [
+    { view: "front", render: (o) => ellipse(SHOULDER_L, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => ellipse(SHOULDER_R, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => ellipse(SHOULDER_L, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => ellipse(SHOULDER_R, HIGHLIGHT_FILL, o) },
+  ],
+  biceps: [
+    { view: "front", render: (o) => rect(UPPER_ARM_L, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => rect(UPPER_ARM_R, HIGHLIGHT_FILL, o) },
+  ],
+  triceps: [
+    { view: "back", render: (o) => rect(UPPER_ARM_L, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => rect(UPPER_ARM_R, HIGHLIGHT_FILL, o) },
+  ],
+  calves: [
+    { view: "back", render: (o) => rect(SHIN_L, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => rect(SHIN_R, HIGHLIGHT_FILL, o) },
+  ],
+  core: [{ view: "front", render: (o) => rect(ABS, HIGHLIGHT_FILL, o) }],
+  cardio: [],
+  olympic: [
+    { view: "front", render: (o) => rect(CHEST, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => rect(ABS, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => rect(THIGH_L, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => rect(THIGH_R, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => ellipse(SHOULDER_L, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => ellipse(SHOULDER_R, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => rect(TRAPS, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => rect(LATS, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => rect(GLUTES, HIGHLIGHT_FILL, o) },
+  ],
+  fullBody: [
+    { view: "front", render: (o) => rect(CHEST, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => rect(ABS, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => rect(THIGH_L, HIGHLIGHT_FILL, o) },
+    { view: "front", render: (o) => rect(THIGH_R, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => rect(LATS, HIGHLIGHT_FILL, o) },
+    { view: "back", render: (o) => rect(GLUTES, HIGHLIGHT_FILL, o) },
+  ],
+};
+
+function Silhouette({ view, groups, label }: { view: "front" | "back"; groups: MuscleGroup[]; label: string }) {
+  const overlays = groups.flatMap((g) => GROUP_OVERLAYS[g].filter((o) => o.view === view));
   return (
     <div className="flex flex-col items-center gap-1">
-      <svg viewBox="0 0 100 220" width={100} height={220}>
-        <circle cx={50} cy={16} r={13} fill="none" stroke="var(--border)" strokeWidth={1.5} />
-        <rect x={44} y={26} width={12} height={10} rx={3} fill="none" stroke="var(--border)" strokeWidth={1.5} />
-        {outlineOnly.map((s) => renderShape(s, false))}
-        {shapes.map((s) => renderShape(s, highlightedIds.has(s.id)))}
+      <svg viewBox="0 0 120 240" width={110} height={220}>
+        <BaseBody />
+        {overlays.map((o, i) => (
+          <g key={i}>{o.render(0.85)}</g>
+        ))}
       </svg>
       <span className="text-[11px] text-foreground-muted">{label}</span>
     </div>
@@ -134,30 +145,13 @@ function BodySilhouette({
 }
 
 export function MuscleGroupDiagram({ groups }: { groups: MuscleGroup[] }) {
-  const frontHighlighted = new Set<string>();
-  const backHighlighted = new Set<string>();
-  for (const group of groups) {
-    const mapping = GROUP_TO_SHAPES[group];
-    for (const id of mapping.front) frontHighlighted.add(id);
-    for (const id of mapping.back) backHighlighted.add(id);
-  }
-
-  if (frontHighlighted.size === 0 && backHighlighted.size === 0) return null;
+  const hasAnyOverlay = groups.some((g) => GROUP_OVERLAYS[g].length > 0);
+  if (!hasAnyOverlay) return null;
 
   return (
-    <div className="flex justify-center gap-6">
-      <BodySilhouette
-        shapes={FRONT_SHAPES}
-        outlineOnly={FRONT_OUTLINE_ONLY}
-        highlightedIds={frontHighlighted}
-        label="Frente"
-      />
-      <BodySilhouette
-        shapes={BACK_SHAPES}
-        outlineOnly={BACK_OUTLINE_ONLY}
-        highlightedIds={backHighlighted}
-        label="Costas"
-      />
+    <div className="flex justify-center gap-8">
+      <Silhouette view="front" groups={groups} label="Frente" />
+      <Silhouette view="back" groups={groups} label="Costas" />
     </div>
   );
 }
