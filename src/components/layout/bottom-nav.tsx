@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_ITEMS } from "./nav-items";
+import { PRIMARY_NAV_ITEMS } from "./nav-items";
 import { NavIcon } from "./nav-icon";
 
 export function BottomNav() {
@@ -14,7 +14,7 @@ export function BottomNav() {
       aria-label="Primary"
     >
       <ul className="flex items-stretch justify-between">
-        {NAV_ITEMS.map((item) => {
+        {PRIMARY_NAV_ITEMS.map((item) => {
           const active =
             item.href === "/"
               ? pathname === "/"

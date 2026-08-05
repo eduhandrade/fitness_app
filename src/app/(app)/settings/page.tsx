@@ -67,7 +67,7 @@ export default async function SettingsPage({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="profile" className="scroll-mt-20">
         <CardHeader>
           <CardTitle>Profile</CardTitle>
         </CardHeader>

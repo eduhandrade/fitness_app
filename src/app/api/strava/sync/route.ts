@@ -38,8 +38,24 @@ export async function POST() {
     if (activities.length === 0) break;
 
     for (const activity of activities) {
+      const stravaId = String(activity.id);
+
+      // An activity we created locally (a gym session, a trainer ride) and
+      // then sent to Strava ourselves already carries this stravaId — don't
+      // let a resync stomp its richer local classification (e.g.
+      // BIKE_TRAINER) with Strava's own generic re-mapping of what it got
+      // back (e.g. "VirtualRide" → RIDE). Only activities that originated
+      // on Strava get refreshed here.
+      const existing = await prisma.activity.findUnique({
+        where: { stravaId },
+        select: { source: true },
+      });
+      if (existing && existing.source !== "STRAVA") {
+        continue;
+      }
+
       await prisma.activity.upsert({
-        where: { stravaId: String(activity.id) },
+        where: { stravaId },
         update: {
           name: activity.name,
           sport: mapStravaSportType(activity.sport_type),
