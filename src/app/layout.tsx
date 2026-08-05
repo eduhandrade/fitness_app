@@ -33,6 +33,12 @@ export async function generateViewport(): Promise<Viewport> {
     width: "device-width",
     initialScale: 1,
     maximumScale: 1,
+    // Required for `env(safe-area-inset-*)` to resolve to real values —
+    // without it iOS reports 0 for all of them, so the notch/status-bar and
+    // home-indicator padding below silently does nothing when the app is
+    // added to the home screen (statusBarStyle "black-translucent" draws
+    // content under the status bar, which is exactly when this matters).
+    viewportFit: "cover",
   };
 }
 
