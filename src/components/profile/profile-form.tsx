@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
-import { updateProfile, type ProfileState } from "@/app/(app)/settings/actions";
+import { updateProfile, type ProfileState } from "@/app/(app)/profile/actions";
 
 const initialState: ProfileState = {};
 

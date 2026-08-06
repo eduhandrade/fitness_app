@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import { formatUtcDate, toIsoDateOnly } from "@/lib/date";
+import { formatUtcDate } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StravaConnectionCard } from "@/components/settings/strava-connection-card";
-import { ProfileForm } from "@/components/settings/profile-form";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { PasskeyManager } from "@/components/auth/passkey-manager";
 
@@ -16,9 +15,8 @@ export default async function SettingsPage({
   const userId = await requireUserId();
   const { strava_error, strava_connected } = await searchParams;
 
-  const [connection, profile, passkeys] = await Promise.all([
+  const [connection, passkeys] = await Promise.all([
     prisma.stravaConnection.findUnique({ where: { userId } }),
-    prisma.profile.findUnique({ where: { userId } }),
     prisma.passkey.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
   ]);
 
@@ -81,21 +79,6 @@ export default async function SettingsPage({
           >
             View all activities →
           </Link>
-        </CardContent>
-      </Card>
-
-      <Card id="profile" className="scroll-mt-20">
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProfileForm
-            heightCm={profile?.heightCm}
-            dateOfBirth={
-              profile?.dateOfBirth ? toIsoDateOnly(profile.dateOfBirth) : null
-            }
-            sex={profile?.sex}
-          />
         </CardContent>
       </Card>
     </div>

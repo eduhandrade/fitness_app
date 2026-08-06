@@ -19,8 +19,6 @@ export const MENU_ITEMS: NavItem[] = [
   { href: "/progress", label: "Progress", icon: "chart" },
   { href: "/bike-trainer", label: "Trainer", icon: "bike" },
   { href: "/activities", label: "Activities", icon: "activity" },
-  // Profile is a section within Settings (see settings/page.tsx), not a
-  // separate page — deep-links straight to that card.
-  { href: "/settings#profile", label: "Profile", icon: "user" },
+  { href: "/profile", label: "Profile", icon: "user" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ];
