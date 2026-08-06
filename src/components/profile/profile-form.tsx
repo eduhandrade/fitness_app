@@ -2,9 +2,11 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
+import { DateSelectField } from "@/components/ui/date-select-field";
 import { updateProfile, type ProfileState } from "@/app/(app)/profile/actions";
 
 const initialState: ProfileState = {};
+const CURRENT_YEAR = new Date().getUTCFullYear();
 
 export function ProfileForm({
   heightCm,
@@ -20,10 +22,8 @@ export function ProfileForm({
   return (
     <form action={formAction} className="space-y-3">
       {/* Each field on its own full-width row — a shared 2-column grid isn't
-          reliably safe for either a native date input (iOS Safari enforces
-          an internal minimum width that ignores CSS width once the column
-          is narrower than that) or a <select> with long option text
-          ("Prefer not to say" gets clipped at half width). */}
+          reliably safe for a <select> with long option text ("Prefer not to
+          say" gets clipped at half width). */}
       <div className="space-y-1.5">
         <label htmlFor="heightCm" className="text-xs font-medium text-foreground-muted">
           Height (cm)
@@ -39,15 +39,13 @@ export function ProfileForm({
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="dateOfBirth" className="text-xs font-medium text-foreground-muted">
-          Date of birth
-        </label>
-        <input
+        <span className="text-xs font-medium text-foreground-muted">Date of birth</span>
+        <DateSelectField
           id="dateOfBirth"
           name="dateOfBirth"
-          type="date"
-          defaultValue={dateOfBirth ?? undefined}
-          className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
+          defaultValue={dateOfBirth}
+          minYear={CURRENT_YEAR - 100}
+          maxYear={CURRENT_YEAR}
         />
       </div>
 
