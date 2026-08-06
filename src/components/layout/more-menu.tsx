@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MENU_ITEMS } from "./nav-items";
 import { NavIcon } from "./nav-icon";
 import { MoreIcon } from "@/components/icons";
+import { LogoutButton } from "@/components/auth/logout-button";
 
 export function MoreMenu() {
   const [open, setOpen] = useState(false);
@@ -56,6 +57,9 @@ export function MoreMenu() {
               {item.label}
             </Link>
           ))}
+          <div className="border-t border-border">
+            <LogoutButton />
+          </div>
         </div>
       )}
     </div>

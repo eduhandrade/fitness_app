@@ -1,5 +1,6 @@
 import { TopBar } from "@/components/layout/top-bar";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { requireUserId } from "@/lib/session";
 
 // Every page here reads live, frequently-changing data straight from the
 // database (weight log, activities, training plan progress) — without an
@@ -7,7 +8,12 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 // prerender these once at build time and freeze the data.
 export const dynamic = "force-dynamic";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  // Gates every route under (app) — redirects to /login if unauthenticated.
+  // requireUserId() is wrapped in React's cache(), so this and each page's
+  // own call dedupe into a single session lookup per request.
+  await requireUserId();
+
   return (
     <>
       <TopBar />

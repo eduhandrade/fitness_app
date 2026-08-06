@@ -8,12 +8,10 @@ level, race goal, and available training time.
 Built with Next.js (App Router) + TypeScript, Tailwind CSS, and Prisma +
 PostgreSQL. Add it to your phone's home screen — it's a PWA.
 
-> **No login.** This is a single-user app with no authentication — anyone with
-> the URL can see and change everything (body weight, training plans, Strava
-> connection). That's a deliberate tradeoff for personal convenience, made at
-> the owner's request. Don't deploy this publicly if that's not an acceptable
-> risk for your data — put it behind Vercel's password protection, a VPN, or
-> similar if you want a barrier back.
+> **Invite-only signup.** Anyone can reach `/signup`, but creating an account
+> requires the `SIGNUP_INVITE_CODE` you set — without it, signup is closed.
+> Each account only ever sees its own data (body weight, training plans,
+> Strava connection); there's no cross-account access.
 
 ## Features
 
@@ -45,10 +43,14 @@ cp .env.example .env
 Fill in:
 
 - `DATABASE_URL` — your Postgres connection string.
-- `SEED_USER_EMAIL` / `SEED_USER_PASSWORD` / `SEED_USER_NAME` — identify the
-  single account this app is for (there's no login, so the password isn't
-  checked anywhere — it's just a required field on the account record). Used
-  by the seed script below.
+- `SEED_USER_EMAIL` / `SEED_USER_PASSWORD` / `SEED_USER_NAME` — creates the
+  very first account (via the seed script below), before any invite code
+  exists to sign up with. Real login credentials — the password is checked
+  on login like any other account.
+- `SIGNUP_INVITE_CODE` — required to create additional accounts at `/signup`.
+  Anyone with this code can self-register their own, fully isolated account.
+  Rotating it (redeploy with a new value) revokes it for everyone at once —
+  there's no per-person tracking or revocation at this scale.
 - `TOKEN_ENCRYPTION_KEY` — a 32-byte hex key (`openssl rand -hex 32`) used to
   encrypt your Strava tokens at rest.
 - `STRAVA_CLIENT_ID` / `STRAVA_CLIENT_SECRET` / `STRAVA_REDIRECT_URI` — see below.
@@ -70,7 +72,7 @@ someone else's credentials):
 ```bash
 npm install
 npx prisma migrate deploy   # or `prisma migrate dev` in development
-npx prisma db seed          # creates your single account record
+npx prisma db seed          # creates your first account (the owner's)
 ```
 
 ### 5. Run
@@ -79,8 +81,9 @@ npx prisma db seed          # creates your single account record
 npm run dev
 ```
 
-Open the app — it goes straight to the dashboard, no login — and connect
-Strava from **Settings**.
+Open the app, log in with `SEED_USER_EMAIL`/`SEED_USER_PASSWORD`, and connect
+Strava from **Settings**. To let someone else use the app under their own
+account, share `/signup` and your `SIGNUP_INVITE_CODE` with them.
 
 ## Deploying
 
@@ -105,18 +108,19 @@ step needed.
    times out (`P1002`).
 2. Import the repo into Vercel and set these environment variables in the
    project settings (same ones as `.env.example`):
-   `DATABASE_URL`, `DIRECT_URL`, `TOKEN_ENCRYPTION_KEY`, `SEED_USER_EMAIL`,
-   `SEED_USER_PASSWORD`, `SEED_USER_NAME`, `STRAVA_CLIENT_ID`,
-   `STRAVA_CLIENT_SECRET`, `STRAVA_REDIRECT_URI`
+   `DATABASE_URL`, `DIRECT_URL`, `TOKEN_ENCRYPTION_KEY`, `SIGNUP_INVITE_CODE`,
+   `SEED_USER_EMAIL`, `SEED_USER_PASSWORD`, `SEED_USER_NAME`,
+   `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_REDIRECT_URI`
    (`https://your-actual-vercel-url.vercel.app/api/strava/callback` — use
    your project's real generated domain, found under **Domains** in the
    Vercel dashboard, not a placeholder).
 3. Deploy. The build applies migrations automatically (step above).
-4. Seed your account once — visit `/setup` on your deployed app and tap the
-   button (no terminal needed). Or, from a computer with the repo cloned:
+4. Seed your account once, from a computer with the repo cloned:
    ```bash
    DATABASE_URL="<your production connection string>" npx prisma db seed
    ```
+   Log in with those credentials at `/login`. Anyone else can create their
+   own account at `/signup` using `SIGNUP_INVITE_CODE`.
 5. Update your Strava API app's **Authorization Callback Domain** (at
    <https://www.strava.com/settings/api>) to your production domain — it can't
    stay `localhost` once you're live.
