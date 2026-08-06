@@ -7,9 +7,15 @@ import { getOptionalUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
-export default async function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string }>;
+}) {
   const userId = await getOptionalUserId();
   if (userId) redirect("/");
+
+  const { code } = await searchParams;
 
   return (
     <main className="flex min-h-svh flex-1 items-center justify-center px-6">
@@ -27,7 +33,7 @@ export default async function SignupPage() {
             <CardTitle>Nova conta</CardTitle>
           </CardHeader>
           <CardContent>
-            <SignupForm />
+            <SignupForm defaultInviteCode={code} />
           </CardContent>
         </Card>
 

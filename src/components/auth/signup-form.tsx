@@ -6,7 +6,7 @@ import { signup, type SignupState } from "@/app/signup/actions";
 
 const initialState: SignupState = {};
 
-export function SignupForm() {
+export function SignupForm({ defaultInviteCode }: { defaultInviteCode?: string }) {
   const [state, formAction, pending] = useActionState(signup, initialState);
 
   return (
@@ -50,6 +50,7 @@ export function SignupForm() {
           type="text"
           required
           autoComplete="off"
+          defaultValue={defaultInviteCode}
           className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
         />
       </div>
