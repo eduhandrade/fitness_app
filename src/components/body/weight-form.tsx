@@ -18,7 +18,7 @@ export function WeightForm() {
   return (
     <form action={formAction} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <label htmlFor="date" className="text-xs font-medium text-foreground-muted">
             Date
           </label>
@@ -29,10 +29,10 @@ export function WeightForm() {
             required
             defaultValue={todayLocalISODate()}
             max={todayLocalISODate()}
-            className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
+            className="w-full min-w-0 rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
           />
         </div>
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <label htmlFor="weightKg" className="text-xs font-medium text-foreground-muted">
             Weight (kg)
           </label>
@@ -46,7 +46,7 @@ export function WeightForm() {
             max="400"
             required
             placeholder="72.4"
-            className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
+            className="w-full min-w-0 rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
           />
         </div>
       </div>

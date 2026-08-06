@@ -20,7 +20,7 @@ export function ProfileForm({
   return (
     <form action={formAction} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <label htmlFor="heightCm" className="text-xs font-medium text-foreground-muted">
             Height (cm)
           </label>
@@ -30,10 +30,10 @@ export function ProfileForm({
             type="number"
             step="0.1"
             defaultValue={heightCm ?? undefined}
-            className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
+            className="w-full min-w-0 rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
           />
         </div>
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <label htmlFor="dateOfBirth" className="text-xs font-medium text-foreground-muted">
             Date of birth
           </label>
@@ -42,7 +42,7 @@ export function ProfileForm({
             name="dateOfBirth"
             type="date"
             defaultValue={dateOfBirth ?? undefined}
-            className="w-full rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
+            className="w-full min-w-0 rounded-xl border border-border bg-surface-hover px-3 py-2 text-sm outline-none focus:border-primary"
           />
         </div>
       </div>
