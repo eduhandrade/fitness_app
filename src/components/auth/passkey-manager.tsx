@@ -13,6 +13,7 @@ import {
   getPasskeyRegistrationOptions,
   verifyPasskeyRegistration,
 } from "@/components/auth/passkey-actions";
+import { clearFaceIdEnabledLocally, markFaceIdEnabledLocally } from "@/lib/faceid-local";
 
 export type PasskeyEntry = { id: string; label: string; createdAt: string };
 
@@ -47,7 +48,11 @@ export function PasskeyManager({ passkeys }: { passkeys: PasskeyEntry[] }) {
       const options = await getPasskeyRegistrationOptions();
       const response = await startRegistration({ optionsJSON: options });
       const result = await verifyPasskeyRegistration(response, guessDeviceLabel());
-      if (!result.ok) setError(result.error);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      markFaceIdEnabledLocally();
     } catch {
       setError("Não foi possível registrar. Tente novamente.");
     }
@@ -71,7 +76,12 @@ export function PasskeyManager({ passkeys }: { passkeys: PasskeyEntry[] }) {
                 type="button"
                 aria-label="Remover"
                 disabled={isPending}
-                onClick={() => startTransition(() => deletePasskey(p.id))}
+                onClick={() =>
+                  startTransition(async () => {
+                    await deletePasskey(p.id);
+                    clearFaceIdEnabledLocally();
+                  })
+                }
                 className="flex h-7 w-7 items-center justify-center rounded-full text-foreground-muted hover:bg-surface-hover hover:text-danger disabled:opacity-50"
               >
                 <TrashIcon className="h-4 w-4" />

@@ -120,12 +120,17 @@ step needed.
    your project's real generated domain, found under **Domains** in the
    Vercel dashboard, not a placeholder).
 3. Deploy. The build applies migrations automatically (step above).
-4. Seed your account once, from a computer with the repo cloned:
-   ```bash
-   DATABASE_URL="<your production connection string>" npx prisma db seed
-   ```
-   Log in with those credentials at `/login`. Anyone else can create their
-   own account at `/signup` using `SIGNUP_INVITE_CODE`.
+4. Create your account: visit `/setup` on your deployed app and tap the
+   button (no terminal needed — handy from a phone). It creates (or, if it
+   already exists, resets the password on) the one account defined by
+   `SEED_USER_EMAIL`/`SEED_USER_PASSWORD`. Log in with those credentials at
+   `/login`. If you ever forget that password, or change
+   `SEED_USER_PASSWORD` and need the DB to catch up, just visit `/setup`
+   again — there's a link to it from the login page too. Anyone else can
+   create their own, separate account at `/signup` using
+   `SIGNUP_INVITE_CODE`; `/setup` never touches those accounts.
+   (Alternatively, from a computer with the repo cloned:
+   `DATABASE_URL="<your production connection string>" npx prisma db seed`.)
 5. Update your Strava API app's **Authorization Callback Domain** (at
    <https://www.strava.com/settings/api>) to your production domain — it can't
    stay `localhost` once you're live.

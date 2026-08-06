@@ -9,18 +9,25 @@ import {
 } from "@simplewebauthn/browser";
 import { Button } from "@/components/ui/button";
 import { getPasskeyAuthOptions, verifyPasskeyAuth } from "@/app/login/passkey-actions";
+import { clearFaceIdEnabledLocally, isFaceIdEnabledLocally } from "@/lib/faceid-local";
 
 export function PasskeyLoginButton() {
   const router = useRouter();
-  const [supported, setSupported] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
+    // Gate on this device having actually completed registration before —
+    // otherwise there's nothing to authenticate against, and calling
+    // startAuthentication() with zero passkeys triggers the browser's
+    // generic "no passkeys saved, scan a QR code or use a security key"
+    // fallback sheet instead of a clean Face ID prompt.
+    if (!isFaceIdEnabledLocally()) return;
     let cancelled = false;
     (async () => {
       const ok = browserSupportsWebAuthn() && (await platformAuthenticatorIsAvailable());
-      if (!cancelled) setSupported(ok);
+      if (!cancelled) setVisible(ok);
     })();
     return () => {
       cancelled = true;
@@ -34,6 +41,9 @@ export function PasskeyLoginButton() {
       const response = await startAuthentication({ optionsJSON: options });
       const result = await verifyPasskeyAuth(response);
       if (!result.ok) {
+        // The passkey this device remembers no longer exists on the server
+        // (e.g. removed from Settings) — stop offering it on future visits.
+        clearFaceIdEnabledLocally();
         setError(result.error);
         return;
       }
@@ -46,7 +56,7 @@ export function PasskeyLoginButton() {
     }
   }
 
-  if (!supported) return null;
+  if (!visible) return null;
 
   return (
     <div className="mt-3 space-y-1.5">

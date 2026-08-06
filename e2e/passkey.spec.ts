@@ -79,3 +79,50 @@ test("register a passkey, log out, and log back in with it", async ({ page, cont
 
   await cdp.send("WebAuthn.removeVirtualAuthenticator", { authenticatorId });
 });
+
+test("home page offers to enable Face ID right after a password login", async ({
+  page,
+  context,
+}) => {
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("WebAuthn.enable");
+  const { authenticatorId } = await cdp.send("WebAuthn.addVirtualAuthenticator", {
+    options: {
+      protocol: "ctap2",
+      transport: "internal",
+      hasResidentKey: true,
+      hasUserVerification: true,
+      isUserVerified: true,
+      automaticPresenceSimulation: true,
+    },
+  });
+
+  await page.goto("/login");
+  await page.fill("#email", OWNER_EMAIL);
+  await page.fill("#password", OWNER_PASSWORD);
+  await page.click('button[type="submit"]');
+  await expect(page).toHaveURL("/");
+
+  const before = await ownerPasskeyCount();
+
+  await expect(page.getByText("Ativar Face ID neste dispositivo")).toBeVisible({
+    timeout: 10_000,
+  });
+  await page.getByRole("button", { name: "Ativar Face ID" }).click();
+  await expect(page.getByText("Face ID ativado!")).toBeVisible({ timeout: 10_000 });
+  expect(await ownerPasskeyCount()).toBe(before + 1);
+
+  await cdp.send("WebAuthn.removeVirtualAuthenticator", { authenticatorId });
+});
+
+test("a device that never registered a passkey never sees the Face ID login button", async ({
+  page,
+}) => {
+  // No localStorage flag set, no virtual authenticator wired up — this
+  // simulates a brand-new device/browser. Even if the account has passkeys
+  // registered elsewhere, this device shouldn't offer a button that would
+  // only trigger the browser's confusing "no passkeys here" fallback sheet.
+  await page.goto("/login");
+  await page.waitForTimeout(500);
+  await expect(page.getByRole("button", { name: "Entrar com Face ID" })).toHaveCount(0);
+});

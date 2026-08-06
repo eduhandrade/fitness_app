@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { SportBadge } from "@/components/sport-badge";
 import { SessionRow } from "@/components/training/session-row";
 import { TrendLineChart, type TrendPoint } from "@/components/charts/trend-line-chart";
+import { EnableFaceIdPrompt } from "@/components/auth/enable-faceid-prompt";
 
 export default async function DashboardPage() {
   const userId = await requireUserId();
@@ -52,6 +53,8 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Home</h1>
+
+      <EnableFaceIdPrompt />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">

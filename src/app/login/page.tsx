@@ -36,6 +36,12 @@ export default async function LoginPage() {
             Criar conta
           </Link>
         </p>
+        <p className="text-center text-xs text-foreground-muted">
+          É o dono da conta principal e esqueceu a senha?{" "}
+          <Link href="/setup" className="underline">
+            Recuperar acesso
+          </Link>
+        </p>
       </div>
     </main>
   );
