@@ -13,6 +13,8 @@
     "@garmin/fitsdk": "^21.208.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.2",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.4.0",
     "next": "16.2.10",

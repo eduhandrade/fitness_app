@@ -85,6 +85,22 @@ model User {
   gymPlans         GymPlan[]
   trainingPlans    TrainingPlan[]
   sessions         Session[]
+  passkeys         Passkey[]
+}
+
+model Passkey {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String    @unique
+  publicKey    Bytes
+  counter      Int       @default(0)
+  transports   String?
+  label        String?
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime?
+
+  @@index([userId])
 }
 
 model Session {

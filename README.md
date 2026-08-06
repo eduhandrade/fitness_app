@@ -26,6 +26,11 @@ PostgreSQL. Add it to your phone's home screen — it's a PWA.
   plan from your chosen disciplines, level, race goal, and available days/minutes
   per week. No external API calls — it's pure rule-based logic in
   `src/lib/training/`.
+- **Face ID / biometric login** — register a passkey (via WebAuthn) from
+  **Settings** on any device with Face ID, Touch ID, or Android biometrics, then
+  log in with a tap instead of typing a password. The face/fingerprint scan
+  never leaves your device — the app only ever receives a cryptographic
+  signature, never biometric data.
 
 ## Setup
 

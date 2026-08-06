@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StravaConnectionCard } from "@/components/settings/strava-connection-card";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { PasskeyManager } from "@/components/auth/passkey-manager";
 
 export default async function SettingsPage({
   searchParams,
@@ -15,9 +16,10 @@ export default async function SettingsPage({
   const userId = await requireUserId();
   const { strava_error, strava_connected } = await searchParams;
 
-  const [connection, profile] = await Promise.all([
+  const [connection, profile, passkeys] = await Promise.all([
     prisma.stravaConnection.findUnique({ where: { userId } }),
     prisma.profile.findUnique({ where: { userId } }),
+    prisma.passkey.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
   ]);
 
   return (
@@ -41,6 +43,21 @@ export default async function SettingsPage({
         </CardHeader>
         <CardContent>
           <ThemeToggle />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Face ID / Biometria</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PasskeyManager
+            passkeys={passkeys.map((p) => ({
+              id: p.id,
+              label: p.label ?? "Dispositivo",
+              createdAt: formatUtcDate(p.createdAt),
+            }))}
+          />
         </CardContent>
       </Card>
 

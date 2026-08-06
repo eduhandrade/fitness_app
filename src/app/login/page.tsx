@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { LoginForm } from "@/components/auth/login-form";
+import { PasskeyLoginButton } from "@/components/auth/passkey-login-button";
 import { getOptionalUserId } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ export default async function LoginPage() {
           </CardHeader>
           <CardContent>
             <LoginForm />
+            <PasskeyLoginButton />
           </CardContent>
         </Card>
 
