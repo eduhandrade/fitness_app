@@ -6,27 +6,69 @@ import { plannedWeightOnDate } from "@/lib/nutrition/goal";
 import { WeightGoalForm } from "@/components/nutrition/weight-goal-form";
 import { WeightGoalProgress } from "@/components/nutrition/weight-goal-progress";
 import { NutritionProfileForm } from "@/components/nutrition/nutrition-profile-form";
-import { AddFoodEntry } from "@/components/nutrition/add-food-entry";
 import { FoodDiary } from "@/components/nutrition/food-diary";
+import type { RecentFoodOption } from "@/components/nutrition/recent-foods-panel";
 import type { DualTrendPoint } from "@/components/charts/weight-goal-chart";
+import type { MealType } from "@/generated/prisma/enums";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const MEAL_TYPES: MealType[] = ["BREAKFAST", "LUNCH", "DINNER", "SNACK"];
 
 export default async function NutritionPage() {
   const userId = await requireUserId();
 
   const todayUtc = toUtcDateOnly(new Date().toISOString().slice(0, 10));
 
-  const [goal, profile, todayEntries] = await Promise.all([
-    prisma.weightGoal.findFirst({ where: { userId, status: "ACTIVE" } }),
-    prisma.profile.findUnique({ where: { userId } }),
-    prisma.foodEntry.findMany({
-      where: { userId, date: todayUtc },
-      orderBy: { createdAt: "asc" },
-    }),
-  ]);
+  const [goal, profile, todayEntries, customFoods, savedMeals, recentByMealEntries] =
+    await Promise.all([
+      prisma.weightGoal.findFirst({ where: { userId, status: "ACTIVE" } }),
+      prisma.profile.findUnique({ where: { userId } }),
+      prisma.foodEntry.findMany({
+        where: { userId, date: todayUtc },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.customFood.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
+      prisma.savedMeal.findMany({
+        where: { userId },
+        include: { items: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      Promise.all(
+        MEAL_TYPES.map((meal) =>
+          prisma.foodEntry.findMany({
+            where: { userId, meal },
+            orderBy: { createdAt: "desc" },
+            distinct: ["name"],
+            take: 6,
+          })
+        )
+      ),
+    ]);
 
   const totalCaloriesToday = todayEntries.reduce((sum, e) => sum + e.calories, 0);
+
+  const recentByMeal = Object.fromEntries(
+    MEAL_TYPES.map((meal, i) => [
+      meal,
+      recentByMealEntries[i].map(
+        (e): RecentFoodOption => ({
+          id: e.id,
+          name: e.name,
+          brand: e.brand,
+          quantity: e.quantity,
+          unit: e.unit,
+          calories: e.calories,
+        })
+      ),
+    ])
+  ) as Record<MealType, RecentFoodOption[]>;
+
+  const savedMealsForUi = savedMeals.map((sm) => ({
+    id: sm.id,
+    name: sm.name,
+    totalCalories: sm.items.reduce((sum, i) => sum + i.calories, 0),
+    itemCount: sm.items.length,
+  }));
 
   const chartData: DualTrendPoint[] = [];
   let remainingKg = 0;
@@ -112,8 +154,7 @@ export default async function NutritionPage() {
             {goal ? ` / ${goal.dailyCalorieTarget}` : ""} kcal
           </span>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <AddFoodEntry />
+        <CardContent>
           <FoodDiary
             entries={todayEntries.map((e) => ({
               id: e.id,
@@ -124,6 +165,9 @@ export default async function NutritionPage() {
               unit: e.unit,
               calories: e.calories,
             }))}
+            customFoods={customFoods}
+            savedMeals={savedMealsForUi}
+            recentByMeal={recentByMeal}
           />
         </CardContent>
       </Card>

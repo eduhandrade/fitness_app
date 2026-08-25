@@ -5,14 +5,14 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { toUtcDateOnly } from "@/lib/date";
-import { ActivityLevel, FoodUnit, MealType } from "@/generated/prisma/enums";
+import { ActivityLevel, FoodUnit, MealType, NutritionBasis } from "@/generated/prisma/enums";
 import { ageFromDateOfBirth, calculateBmr, calculateTdee } from "@/lib/nutrition/bmr";
 import {
   calculateDailyCalorieTarget,
   calculateTargetDate,
   MAX_WEEKLY_RATE_KG,
 } from "@/lib/nutrition/goal";
-import { calculateNutrients, resolveGrams } from "@/lib/nutrition/units";
+import { calculateNutrientsForEntry } from "@/lib/nutrition/units";
 import {
   searchFoods as searchOpenFoodFacts,
   type FoodSearchResult,
@@ -160,10 +160,11 @@ const logFoodEntrySchema = z.object({
   unit: z.nativeEnum(FoodUnit),
   name: z.string().min(1),
   brand: z.string().nullable(),
-  caloriesPer100g: z.coerce.number().nonnegative(),
-  proteinPer100g: z.coerce.number().nonnegative(),
-  carbsPer100g: z.coerce.number().nonnegative(),
-  fatPer100g: z.coerce.number().nonnegative(),
+  basis: z.nativeEnum(NutritionBasis),
+  caloriesPerBasis: z.coerce.number().nonnegative(),
+  proteinPerBasis: z.coerce.number().nonnegative(),
+  carbsPerBasis: z.coerce.number().nonnegative(),
+  fatPerBasis: z.coerce.number().nonnegative(),
   sourceCode: z.string().nullable(),
 });
 
@@ -173,14 +174,15 @@ export async function logFoodEntry(input: LogFoodEntryInput): Promise<void> {
   const userId = await requireUserId();
   const parsed = logFoodEntrySchema.parse(input);
 
-  const grams = resolveGrams(parsed.quantity, parsed.unit);
-  const nutrients = calculateNutrients({
-    grams,
-    per100g: {
-      calories: parsed.caloriesPer100g,
-      proteinG: parsed.proteinPer100g,
-      carbsG: parsed.carbsPer100g,
-      fatG: parsed.fatPer100g,
+  const { grams, nutrients } = calculateNutrientsForEntry({
+    quantity: parsed.quantity,
+    unit: parsed.unit,
+    basis: parsed.basis,
+    perBasis: {
+      calories: parsed.caloriesPerBasis,
+      proteinG: parsed.proteinPerBasis,
+      carbsG: parsed.carbsPerBasis,
+      fatG: parsed.fatPerBasis,
     },
   });
 
@@ -211,4 +213,146 @@ export async function deleteFoodEntry(id: string): Promise<void> {
   await prisma.foodEntry.delete({ where: { id, userId } });
   revalidatePath("/nutrition");
   revalidatePath("/body");
+}
+
+/** Re-logs a previously logged entry as-is (same quantity/unit/nutrition)
+ * into today (or another date) under a chosen meal — the "Recentes"
+ * one-tap flow. No re-fetch from Open Food Facts or recomputation: the
+ * source entry's values are already fully resolved. */
+export async function logRecentFood(
+  sourceEntryId: string,
+  date: string,
+  meal: MealType
+): Promise<void> {
+  const userId = await requireUserId();
+  const source = await prisma.foodEntry.findFirst({ where: { id: sourceEntryId, userId } });
+  if (!source) throw new Error("Entry not found.");
+
+  await prisma.foodEntry.create({
+    data: {
+      userId,
+      date: toUtcDateOnly(date),
+      meal,
+      name: source.name,
+      brand: source.brand,
+      quantity: source.quantity,
+      unit: source.unit,
+      grams: source.grams,
+      calories: source.calories,
+      proteinG: source.proteinG,
+      carbsG: source.carbsG,
+      fatG: source.fatG,
+      sourceCode: source.sourceCode,
+    },
+  });
+
+  revalidatePath("/nutrition");
+  revalidatePath("/body");
+}
+
+const customFoodSchema = z.object({
+  name: z.string().min(1).max(100),
+  brand: z.string().max(100).nullable(),
+  basis: z.nativeEnum(NutritionBasis),
+  calories: z.coerce.number().nonnegative(),
+  proteinG: z.coerce.number().nonnegative(),
+  carbsG: z.coerce.number().nonnegative(),
+  fatG: z.coerce.number().nonnegative(),
+});
+
+export type CreateCustomFoodInput = z.infer<typeof customFoodSchema>;
+
+export async function createCustomFood(input: CreateCustomFoodInput): Promise<void> {
+  const userId = await requireUserId();
+  const parsed = customFoodSchema.parse(input);
+  await prisma.customFood.create({ data: { userId, ...parsed } });
+  revalidatePath("/nutrition");
+}
+
+export async function deleteCustomFood(id: string): Promise<void> {
+  const userId = await requireUserId();
+  await prisma.customFood.delete({ where: { id, userId } });
+  revalidatePath("/nutrition");
+}
+
+const savedMealItemSchema = z.object({
+  name: z.string().min(1),
+  brand: z.string().nullable(),
+  quantity: z.coerce.number().positive(),
+  unit: z.nativeEnum(FoodUnit),
+  grams: z.coerce.number().nullable(),
+  calories: z.coerce.number().nonnegative(),
+  proteinG: z.coerce.number().nonnegative(),
+  carbsG: z.coerce.number().nonnegative(),
+  fatG: z.coerce.number().nonnegative(),
+  sourceCode: z.string().nullable(),
+});
+
+const createSavedMealSchema = z.object({
+  name: z.string().min(1).max(100),
+  items: z.array(savedMealItemSchema).min(1),
+});
+
+export type CreateSavedMealInput = z.infer<typeof createSavedMealSchema>;
+
+/** A saved meal is a fixed combo, not a live formula — each item stores
+ * already-resolved final values (same shape as FoodEntry), computed once
+ * at save time via the same calculateNutrientsForEntry path as logging a
+ * single food. Logging it later is a pure clone (see logSavedMeal below),
+ * so a saved meal's totals never silently change if the source food's data
+ * changes later. */
+export async function createSavedMeal(input: CreateSavedMealInput): Promise<void> {
+  const userId = await requireUserId();
+  const parsed = createSavedMealSchema.parse(input);
+
+  await prisma.savedMeal.create({
+    data: {
+      userId,
+      name: parsed.name,
+      items: { create: parsed.items },
+    },
+  });
+
+  revalidatePath("/nutrition");
+}
+
+export async function logSavedMeal(
+  savedMealId: string,
+  date: string,
+  meal: MealType
+): Promise<void> {
+  const userId = await requireUserId();
+  const savedMeal = await prisma.savedMeal.findFirst({
+    where: { id: savedMealId, userId },
+    include: { items: true },
+  });
+  if (!savedMeal) throw new Error("Saved meal not found.");
+
+  const dateUtc = toUtcDateOnly(date);
+  await prisma.foodEntry.createMany({
+    data: savedMeal.items.map((item) => ({
+      userId,
+      date: dateUtc,
+      meal,
+      name: item.name,
+      brand: item.brand,
+      quantity: item.quantity,
+      unit: item.unit,
+      grams: item.grams,
+      calories: item.calories,
+      proteinG: item.proteinG,
+      carbsG: item.carbsG,
+      fatG: item.fatG,
+      sourceCode: item.sourceCode,
+    })),
+  });
+
+  revalidatePath("/nutrition");
+  revalidatePath("/body");
+}
+
+export async function deleteSavedMeal(id: string): Promise<void> {
+  const userId = await requireUserId();
+  await prisma.savedMeal.delete({ where: { id, userId } });
+  revalidatePath("/nutrition");
 }

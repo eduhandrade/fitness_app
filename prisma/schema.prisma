@@ -97,6 +97,12 @@ enum FoodUnit {
   CUP
   TABLESPOON
   TEASPOON
+  UNIT
+}
+
+enum NutritionBasis {
+  PER_100G
+  PER_UNIT
 }
 
 model User {
@@ -117,6 +123,8 @@ model User {
   passkeys         Passkey[]
   weightGoals      WeightGoal[]
   foodEntries      FoodEntry[]
+  customFoods      CustomFood[]
+  savedMeals       SavedMeal[]
 }
 
 model Passkey {
@@ -254,7 +262,7 @@ model FoodEntry {
   brand      String?
   quantity   Float
   unit       FoodUnit
-  grams      Float
+  grams      Float?
   calories   Float
   proteinG   Float
   carbsG     Float
@@ -263,6 +271,52 @@ model FoodEntry {
   createdAt  DateTime @default(now())
 
   @@index([userId, date])
+}
+
+model CustomFood {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  brand     String?
+  basis     NutritionBasis
+  calories  Float
+  proteinG  Float
+  carbsG    Float
+  fatG      Float
+  createdAt DateTime       @default(now())
+
+  @@index([userId])
+}
+
+model SavedMeal {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime        @default(now())
+
+  items SavedMealItem[]
+
+  @@index([userId])
+}
+
+model SavedMealItem {
+  id          String    @id @default(cuid())
+  savedMealId String
+  savedMeal   SavedMeal @relation(fields: [savedMealId], references: [id], onDelete: Cascade)
+  name        String
+  brand       String?
+  quantity    Float
+  unit        FoodUnit
+  grams       Float?
+  calories    Float
+  proteinG    Float
+  carbsG      Float
+  fatG        Float
+  sourceCode  String?
+
+  @@index([savedMealId])
 }
 
 model GymPlan {

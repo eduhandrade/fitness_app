@@ -9,7 +9,11 @@ import {
   plannedWeightOnDate,
   MAX_WEEKLY_RATE_KG,
 } from "../src/lib/nutrition/goal";
-import { calculateNutrients, resolveGrams } from "../src/lib/nutrition/units";
+import {
+  calculateNutrients,
+  calculateNutrientsForEntry,
+  resolveGrams,
+} from "../src/lib/nutrition/units";
 
 let failures = 0;
 
@@ -200,6 +204,69 @@ function assertClose(actual: number, expected: number, tolerance: number, label:
   assertClose(result.proteinG, 5, 0.01, "calculateNutrients: protein scales the same way");
   assertClose(result.carbsG, 10, 0.01, "calculateNutrients: carbs scales the same way");
   assertClose(result.fatG, 2.5, 0.01, "calculateNutrients: fat scales the same way");
+}
+
+// --- calculateNutrientsForEntry: basis-aware resolution ---
+{
+  // PER_100G basis delegates to resolveGrams + calculateNutrients as before.
+  const per100g = calculateNutrientsForEntry({
+    quantity: 150,
+    unit: "GRAM",
+    basis: "PER_100G",
+    perBasis: { calories: 200, proteinG: 10, carbsG: 20, fatG: 5 },
+  });
+  assertClose(
+    per100g.grams ?? NaN,
+    150,
+    0.01,
+    "calculateNutrientsForEntry: PER_100G resolves grams from quantity+unit"
+  );
+  assertClose(
+    per100g.nutrients.calories,
+    300,
+    0.01,
+    "calculateNutrientsForEntry: PER_100G scales calories from grams"
+  );
+
+  // PER_UNIT basis has no gram equivalent at all — perBasis means "per 1
+  // unit", so the final totals are just perBasis × quantity, and grams is
+  // null since none was ever computed (e.g. an egg: 78 kcal/unit × 3 eggs).
+  const perUnit = calculateNutrientsForEntry({
+    quantity: 3,
+    unit: "UNIT",
+    basis: "PER_UNIT",
+    perBasis: { calories: 78, proteinG: 6, carbsG: 0.6, fatG: 5 },
+  });
+  assert(
+    perUnit.grams === null,
+    "calculateNutrientsForEntry: PER_UNIT has no gram equivalent (grams is null)"
+  );
+  assertClose(
+    perUnit.nutrients.calories,
+    234,
+    0.01,
+    "calculateNutrientsForEntry: PER_UNIT scales calories by quantity (3 × 78kcal egg)"
+  );
+  assertClose(
+    perUnit.nutrients.proteinG,
+    18,
+    0.01,
+    "calculateNutrientsForEntry: PER_UNIT scales protein by quantity"
+  );
+
+  // A single unit is a pure passthrough of perBasis.
+  const singleUnit = calculateNutrientsForEntry({
+    quantity: 1,
+    unit: "UNIT",
+    basis: "PER_UNIT",
+    perBasis: { calories: 78, proteinG: 6, carbsG: 0.6, fatG: 5 },
+  });
+  assertClose(
+    singleUnit.nutrients.calories,
+    78,
+    0.01,
+    "calculateNutrientsForEntry: PER_UNIT at quantity=1 passes perBasis through unchanged"
+  );
 }
 
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);
