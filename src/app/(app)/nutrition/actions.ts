@@ -143,13 +143,21 @@ export async function endWeightGoal(id: string): Promise<void> {
   revalidatePath("/body");
 }
 
-export async function searchFoods(query: string): Promise<FoodSearchResult[]> {
+export type SearchFoodsResult =
+  | { ok: true; results: FoodSearchResult[] }
+  | { ok: false; error: string };
+
+/** Returns a result value rather than throwing — this Next.js version
+ * strips thrown errors' messages down to a generic "Server Components
+ * render" digest once built for production, so a friendly message here
+ * would never actually reach the client outside of local dev. */
+export async function searchFoods(query: string): Promise<SearchFoodsResult> {
   await requireUserId();
-  if (!query.trim()) return [];
+  if (!query.trim()) return { ok: true, results: [] };
   try {
-    return await searchOpenFoodFacts(query);
+    return { ok: true, results: await searchOpenFoodFacts(query) };
   } catch {
-    throw new Error("Couldn't reach the food database — try again.");
+    return { ok: false, error: "Couldn't reach the food database — try again." };
   }
 }
 

@@ -17,14 +17,15 @@ export function FoodSearchPicker({ onPick }: { onPick: (result: FoodSearchResult
 
   function handleSearch(e: FormEvent) {
     e.preventDefault();
-    setError(null);
     startTransition(async () => {
-      try {
-        const found = await searchFoods(query);
-        setResults(found);
+      const result = await searchFoods(query);
+      if (result.ok) {
+        setError(null);
+        setResults(result.results);
         setSearched(true);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Search failed.");
+      } else {
+        setError(result.error);
+        setResults([]);
       }
     });
   }
