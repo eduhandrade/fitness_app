@@ -76,6 +76,29 @@ const U = (
   defaultUnit: "UNIT",
 });
 
+/** For condiments/spreads/oils normally served "by the spoonful" — still
+ * PER_100G basis (so the existing gram-based math applies via the volume
+ * unit's water-density approximation), just with a spoon/cup as the
+ * everyday default serving instead of 100g. */
+const SPOON = (
+  name: string,
+  calories: number,
+  proteinG: number,
+  carbsG: number,
+  fatG: number,
+  defaultUnit: Extract<FoodUnit, "TABLESPOON" | "TEASPOON" | "CUP"> = "TABLESPOON",
+  defaultQuantity = 1
+): SeedFood => ({
+  name,
+  basis: "PER_100G",
+  calories,
+  proteinG,
+  carbsG,
+  fatG,
+  defaultQuantity,
+  defaultUnit,
+});
+
 const FOODS: SeedFood[] = [
   // --- Grãos, massas e tubérculos (per 100g, cooked) ---
   G("Arroz branco cozido", 128, 2.5, 28, 0.2, 100),
@@ -193,6 +216,148 @@ const FOODS: SeedFood[] = [
   G("Strogonoff de frango", 165, 12, 8, 9.5, 150),
   U("Fatia de lasanha à bolonhesa", 320, 16, 28, 15.5),
   G("Yakisoba de frango", 120, 7, 15, 3.5, 200),
+
+  // --- Grãos e massas (extra) ---
+  G("Nhoque cozido", 156, 3.7, 31, 1.5, 150),
+  G("Cuscuz paulista", 112, 2.1, 24, 0.6, 100),
+  G("Cuscuz de milho (nordestino)", 105, 2.4, 22.3, 0.7, 100),
+  G("Feijão branco cozido", 130, 8.5, 24, 0.5, 90),
+  G("Feijão fradinho cozido", 116, 7.7, 20.8, 0.6, 90),
+  G("Ervilha cozida", 81, 5.4, 14.5, 0.4, 80),
+  G("Granola", 471, 10, 64, 20, 30),
+  G("Muesli", 360, 9, 66, 6, 40),
+  G("Risoto de camarão", 155, 8, 20, 4.5, 200),
+
+  // --- Carnes, aves e peixes (extra) ---
+  G("Costela bovina assada", 235, 24, 0, 15, 120),
+  G("Cupim assado", 258, 23, 0, 18, 120),
+  G("Maminha grelhada", 187, 29, 0, 7.5, 120),
+  G("Fraldinha grelhada", 205, 27, 0, 10.5, 120),
+  G("Alcatra grelhada", 179, 30, 0, 6, 120),
+  G("Contrafilé grelhado", 195, 29, 0, 8, 120),
+  G("Lombo suíno assado", 210, 27, 0, 11, 120),
+  G("Costelinha suína assada", 280, 22, 0, 21, 120),
+  G("Coração de frango grelhado", 219, 21, 0.1, 14.5, 80),
+  G("Fígado bovino grelhado", 175, 26, 3.9, 4.9, 100),
+  G("Carne seca (charque) cozida", 240, 33, 0, 11, 80),
+  G("Peixe frito (posta)", 195, 22, 6, 9, 120),
+  G("Bacalhau cozido", 105, 23, 0, 0.9, 120),
+  G("Sardinha grelhada", 208, 24.6, 0, 11.5, 100),
+  U("Atum em lata (água)", 100, 22, 0, 1),
+  U("Atum em lata (óleo)", 180, 21, 0, 10),
+  G("Polvo cozido", 82, 15, 2.2, 1, 100),
+  G("Lula grelhada", 92, 15.6, 3.1, 1.4, 100),
+
+  // --- Laticínios (extra) ---
+  U("Leite condensado (colher de sopa)", 61, 1.5, 10.4, 1.6),
+  U("Creme de leite (colher de sopa)", 30, 0.4, 0.6, 3),
+  U("Dose de whey protein (scoop)", 120, 24, 3, 1.5),
+  U("Leite fermentado (Yakult)", 51, 0.7, 11.6, 0.1),
+  U("Petit suisse", 60, 2.2, 8.5, 1.8),
+  U("Queijo parmesão ralado (colher de sopa)", 22, 2, 0.2, 1.5),
+  U("Queijo coalho grelhado", 280, 20, 1.5, 21),
+  G("Ricota", 140, 11, 3.4, 8, 50),
+
+  // --- Pães e frios (extra) ---
+  U("Croissant", 231, 4.7, 26.1, 12),
+  U("Pão sírio", 105, 3.5, 20.8, 1),
+  U("Pão careca (hambúrguer)", 130, 4.2, 22, 2.5),
+  U("Fatia de rosca doce", 95, 2.3, 17, 2),
+  U("Sanduíche natural", 210, 9, 26, 7.5),
+
+  // --- Frutas (extra) ---
+  U("Kiwi", 42, 0.8, 10.1, 0.4),
+  U("Ameixa", 30, 0.5, 7.5, 0.2),
+  U("Pêssego", 39, 0.9, 9.5, 0.3),
+  U("Goiaba", 68, 2.6, 14.3, 0.6),
+  U("Caqui", 70, 0.6, 18.6, 0.2),
+  G("Coco (polpa)", 354, 3.3, 15.2, 33.5, 50),
+  U("Tangerina/mexerica", 53, 0.8, 13.3, 0.3),
+  G("Melão (fatia)", 34, 0.8, 8.2, 0.2, 150),
+  G("Maracujá (polpa)", 68, 2, 13.4, 2.4, 60),
+  G("Açaí (polpa, sem açúcar)", 58, 0.8, 6.2, 3.9, 100),
+  G("Frutas secas (mix)", 340, 4, 65, 9, 30),
+  G("Damasco seco", 241, 3.4, 62.6, 0.5, 30),
+  G("Uva passa", 299, 3.1, 79.2, 0.5, 30),
+
+  // --- Vegetais e legumes (extra) ---
+  G("Repolho cru", 25, 1.3, 5.8, 0.1, 80),
+  G("Pimentão cru", 31, 1, 7.3, 0.3, 60),
+  G("Chuchu cozido", 24, 0.6, 5.5, 0.1, 100),
+  G("Beterraba cozida", 44, 1.7, 10, 0.2, 80),
+  G("Quiabo refogado", 45, 2.4, 8.9, 0.6, 80),
+  G("Espinafre refogado", 45, 3.4, 4.9, 1.9, 80),
+  G("Rúcula", 25, 2.6, 3.7, 0.7, 30),
+  G("Agrião", 15, 1.7, 2.3, 0.2, 30),
+  G("Palmito", 26, 2.2, 4.2, 0.3, 60),
+  U("Azeitona (10 unidades)", 45, 0.3, 1.2, 4.5),
+  G("Aspargos grelhados", 25, 2.5, 3.9, 0.2, 80),
+  G("Cogumelo (champignon) refogado", 28, 2.9, 3.7, 0.6, 60),
+
+  // --- Lanches e doces (extra) ---
+  G("Sorvete (bola)", 207, 3.5, 23.6, 11, 60),
+  U("Picolé de fruta", 65, 0.5, 16, 0.1),
+  U("Fatia de pudim", 180, 4.5, 26, 6.5),
+  U("Mousse de maracujá (porção)", 150, 2.5, 20, 6.5),
+  U("Fatia de torta de limão", 290, 4, 34, 15),
+  U("Paçoca", 96, 2.3, 9.4, 5.8),
+  U("Rapadura (pedaço)", 108, 0.1, 27.9, 0),
+  U("Fatia de goiabada", 96, 0.1, 23.6, 0),
+  U("Doce de leite (colher de sopa)", 65, 0.8, 12.5, 1.4),
+  U("Bala de goma (unidade)", 11, 0, 2.8, 0),
+  U("Wafer recheado", 60, 0.6, 8.5, 2.8),
+  U("Cookie (unidade)", 120, 1.5, 17, 5.5),
+  U("Panqueca americana (unidade)", 90, 2.4, 14, 2.6),
+  U("Waffle (unidade)", 220, 5.5, 25, 10.5),
+
+  // --- Bebidas (extra) ---
+  G("Suco de uva integral (copo 200ml)", 60, 0.3, 15, 0, 200),
+  G("Vitamina de banana (copo 250ml)", 110, 4, 18, 2.5, 250),
+  U("Chá sem açúcar (xícara)", 1, 0, 0.2, 0),
+  G("Achocolatado pronto (copo 200ml)", 85, 3, 13, 2.5, 200),
+  U("Lata de energético (250ml)", 115, 0, 28, 0),
+  G("Isotônico (garrafa 500ml)", 24, 0, 6, 0, 500),
+  G("Leite de amêndoas (copo 200ml)", 30, 1, 1, 2.4, 200),
+  U("Xícara de café com leite", 40, 1.6, 3.8, 2),
+  U("Xícara de cappuccino", 70, 3, 6, 3.5),
+  U("Taça de vinho tinto (150ml)", 125, 0.1, 3.8, 0),
+
+  // --- Pratos prontos e fast food (extra) ---
+  G("Nhoque ao sugo (porção)", 130, 3, 24, 2.5, 200),
+  G("Moqueca de peixe (porção)", 140, 14, 5, 7.5, 250),
+  G("Baião de dois (porção)", 160, 6.5, 24, 4, 200),
+  G("Vatapá (porção)", 210, 6, 15, 14, 150),
+  U("Acarajé", 250, 7, 20, 16),
+  U("Tapioca recheada (queijo e presunto)", 220, 8, 34, 6),
+  U("Wrap de frango", 280, 18, 30, 9.5),
+  G("Salada Caesar com frango (porção)", 145, 12, 5, 9, 200),
+  U("Peça de sushi (nigiri)", 48, 2.5, 7.5, 0.7),
+  U("Temaki", 320, 12, 45, 9),
+  U("Nugget de frango (unidade)", 55, 3, 3.5, 3.2),
+  G("Batata frita (porção pequena)", 312, 3.4, 41, 15, 100),
+  G("Anéis de cebola (porção)", 280, 3.5, 32, 15, 100),
+  U("Espetinho de churrasco", 180, 20, 0, 10.5),
+  U("Kibe frito", 205, 9, 15, 12),
+  U("Risole (unidade)", 150, 4, 16, 8),
+  U("Empada (unidade)", 230, 5, 22, 13.5),
+  U("Fatia de torta salgada", 210, 6, 20, 12),
+  G("Sopa de legumes (porção)", 45, 1.5, 8, 0.8, 250),
+  G("Caldo verde (porção)", 95, 3, 11, 4.5, 250),
+  G("Canja de galinha (porção)", 70, 6, 8, 1.5, 250),
+
+  // --- Condimentos, óleos e adoçantes ---
+  SPOON("Azeite de oliva (colher de sopa)", 884, 0, 0, 100),
+  SPOON("Óleo de soja (colher de sopa)", 884, 0, 0, 100),
+  SPOON("Molho de tomate (colher de sopa)", 29, 1.2, 5.4, 0.4),
+  SPOON("Maionese (colher de sopa)", 680, 1, 2, 75),
+  SPOON("Ketchup (colher de sopa)", 101, 1.2, 25.8, 0.1),
+  SPOON("Mostarda (colher de sopa)", 66, 4.4, 5.8, 3.3),
+  SPOON("Molho shoyu (colher de sopa)", 60, 6, 6, 0),
+  G("Vinagrete (porção)", 30, 0.7, 5, 1, 60),
+  SPOON("Açúcar (colher de sopa)", 387, 0, 100, 0),
+  U("Adoçante (gotas)", 0, 0, 0, 0),
+  SPOON("Mel (colher de sopa)", 304, 0.3, 82.4, 0),
+  SPOON("Geleia de fruta (colher de sopa)", 250, 0.4, 62, 0.1),
 ];
 
 async function main() {

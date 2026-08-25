@@ -157,54 +157,58 @@ export type LocalFoodResult = {
   defaultUnit: FoodUnit;
 };
 
-export type SearchFoodsResult = {
-  local: LocalFoodResult[];
-  online: FoodSearchResult[];
-  onlineError: string | null;
-};
-
-/** Searches the app's own curated Food catalog first (fast, reliable, not
- * dependent on any external network call) and Open Food Facts second, as a
- * supplementary source. Returns a result value rather than throwing — this
- * Next.js version strips a thrown error's message down to a generic "Server
- * Components render" digest once built for production, so a friendly
- * message here would never actually reach the client outside of local dev. */
-export async function searchFoods(query: string): Promise<SearchFoodsResult> {
+/** Searches only the app's own curated Food catalog — a plain indexed
+ * Postgres lookup, no external network call at all, so it's fast and
+ * reliable enough to drive live-as-you-type autocomplete. Kept as a
+ * separate action from `searchOnlineFoods` (rather than merged into one
+ * call) specifically so the client can show these results instantly
+ * without ever waiting on the slower, less predictable external source. */
+export async function searchLocalFoods(query: string): Promise<LocalFoodResult[]> {
   await requireUserId();
   const trimmed = query.trim();
-  if (!trimmed) return { local: [], online: [], onlineError: null };
+  if (!trimmed) return [];
 
   const searchName = normalizeSearchText(trimmed);
-  const local = await prisma.food.findMany({
+  const rows = await prisma.food.findMany({
     where: { searchName: { contains: searchName } },
     orderBy: { name: "asc" },
     take: 20,
   });
 
-  let online: FoodSearchResult[] = [];
-  let onlineError: string | null = null;
-  try {
-    online = await searchOpenFoodFacts(trimmed);
-  } catch {
-    onlineError = "Couldn't reach the food database — try again.";
-  }
+  return rows.map((food) => ({
+    id: food.id,
+    name: food.name,
+    brand: food.brand,
+    basis: food.basis,
+    calories: food.calories,
+    proteinG: food.proteinG,
+    carbsG: food.carbsG,
+    fatG: food.fatG,
+    defaultQuantity: food.defaultQuantity,
+    defaultUnit: food.defaultUnit,
+  }));
+}
 
-  return {
-    local: local.map((food) => ({
-      id: food.id,
-      name: food.name,
-      brand: food.brand,
-      basis: food.basis,
-      calories: food.calories,
-      proteinG: food.proteinG,
-      carbsG: food.carbsG,
-      fatG: food.fatG,
-      defaultQuantity: food.defaultQuantity,
-      defaultUnit: food.defaultUnit,
-    })),
-    online,
-    onlineError,
-  };
+export type SearchOnlineFoodsResult =
+  | { ok: true; results: FoodSearchResult[] }
+  | { ok: false; error: string };
+
+/** Explicit, on-demand Open Food Facts lookup — deliberately not triggered
+ * automatically while typing, since it's a live external call, meaningfully
+ * slower than the local catalog, and not always reachable. Returns a result
+ * value rather than throwing — this Next.js version strips a thrown
+ * error's message down to a generic "Server Components render" digest once
+ * built for production, so a friendly message here would never actually
+ * reach the client outside of local dev. */
+export async function searchOnlineFoods(query: string): Promise<SearchOnlineFoodsResult> {
+  await requireUserId();
+  const trimmed = query.trim();
+  if (!trimmed) return { ok: true, results: [] };
+  try {
+    return { ok: true, results: await searchOpenFoodFacts(trimmed) };
+  } catch {
+    return { ok: false, error: "Couldn't reach the food database — try again." };
+  }
 }
 
 const logFoodEntrySchema = z.object({

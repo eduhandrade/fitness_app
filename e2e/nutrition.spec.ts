@@ -168,26 +168,29 @@ test("food search surfaces a clean error when nothing matches locally and online
   await page.goto("/nutrition");
 
   await page.getByRole("button", { name: "Add to Breakfast" }).click();
-  // A query with no match in the curated catalog, so this actually reaches
-  // (and fails against) Open Food Facts — this sandbox's network policy
-  // blocks it outright, so this assertion exercises the real failure path.
+  // A query with no match in the curated catalog, so the online search
+  // (triggered explicitly, since it's no longer part of live autocomplete)
+  // actually reaches — and fails against — Open Food Facts. This sandbox's
+  // network policy blocks it outright, so this assertion exercises the
+  // real failure path.
   await page.fill("#foodSearch", "zzzznonexistentfood12345");
-  await page.click('button:has-text("Search")');
+  await page.click('button:has-text("Buscar online")');
 
   await expect(page.getByText("Couldn't reach the food database")).toBeVisible({
     timeout: 15_000,
   });
 });
 
-test("search finds a curated Brazilian food locally (no network needed) and one-tap logs its default serving", async ({
+test("search finds a curated Brazilian food locally as you type (no network, no button) and one-tap logs its default serving", async ({
   page,
 }) => {
   await loginAsOwner(page);
   await page.goto("/nutrition");
 
   await page.getByRole("button", { name: "Add to Breakfast" }).click();
+  // Live autocomplete: results appear from the local catalog as typed,
+  // debounced — no "Search"/"Buscar online" click needed for this to work.
   await page.fill("#foodSearch", "ovo frito");
-  await page.click('button:has-text("Search")');
 
   await expect(page.getByText("Ovo frito")).toBeVisible();
   await expect(page.getByText("92 cal, 1 un")).toBeVisible();
