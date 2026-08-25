@@ -1,7 +1,17 @@
 export type NavItem = {
   href: string;
   label: string;
-  icon: "home" | "chart" | "calendar" | "dumbbell" | "scale" | "bike" | "activity" | "settings" | "user";
+  icon:
+    | "home"
+    | "chart"
+    | "calendar"
+    | "dumbbell"
+    | "scale"
+    | "bike"
+    | "activity"
+    | "settings"
+    | "user"
+    | "apple";
 };
 
 /** Always visible, thumb-reachable — kept short on purpose (see MENU_ITEMS
@@ -19,6 +29,7 @@ export const MENU_ITEMS: NavItem[] = [
   { href: "/progress", label: "Progress", icon: "chart" },
   { href: "/bike-trainer", label: "Trainer", icon: "bike" },
   { href: "/activities", label: "Activities", icon: "activity" },
+  { href: "/nutrition", label: "Nutrition", icon: "apple" },
   { href: "/profile", label: "Profile", icon: "user" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ];

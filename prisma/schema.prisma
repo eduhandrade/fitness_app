@@ -70,6 +70,35 @@ enum SessionType {
   REST
 }
 
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
+}
+
+enum WeightGoalStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum FoodUnit {
+  GRAM
+  KILOGRAM
+  CUP
+  TABLESPOON
+  TEASPOON
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -86,6 +115,8 @@ model User {
   trainingPlans    TrainingPlan[]
   sessions         Session[]
   passkeys         Passkey[]
+  weightGoals      WeightGoal[]
+  foodEntries      FoodEntry[]
 }
 
 model Passkey {
@@ -115,14 +146,15 @@ model Session {
 }
 
 model Profile {
-  id          String    @id @default(cuid())
-  userId      String    @unique
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  heightCm    Float?
-  dateOfBirth DateTime?
-  sex         Sex?
-  units       String    @default("metric")
-  updatedAt   DateTime  @updatedAt
+  id            String         @id @default(cuid())
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  heightCm      Float?
+  dateOfBirth   DateTime?
+  sex           Sex?
+  activityLevel ActivityLevel?
+  units         String         @default("metric")
+  updatedAt     DateTime       @updatedAt
 }
 
 model StravaConnection {
@@ -193,6 +225,43 @@ model BodyMetric {
   createdAt   DateTime @default(now())
 
   @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model WeightGoal {
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate          DateTime
+  startWeightKg      Float
+  goalWeightKg       Float
+  weeklyRateKg       Float
+  targetDate         DateTime
+  dailyCalorieTarget Int
+  status             WeightGoalStatus @default(ACTIVE)
+  createdAt          DateTime         @default(now())
+
+  @@index([userId, status])
+}
+
+model FoodEntry {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date       DateTime
+  meal       MealType
+  name       String
+  brand      String?
+  quantity   Float
+  unit       FoodUnit
+  grams      Float
+  calories   Float
+  proteinG   Float
+  carbsG     Float
+  fatG       Float
+  sourceCode String?
+  createdAt  DateTime @default(now())
+
   @@index([userId, date])
 }
 

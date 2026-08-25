@@ -1,19 +1,31 @@
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
-import { formatUtcDate } from "@/lib/date";
+import { formatUtcDate, toUtcDateOnly } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WeightForm } from "@/components/body/weight-form";
 import { WeightHistoryTable } from "@/components/body/weight-history-table";
+import { NutritionTeaserCard } from "@/components/body/nutrition-teaser-card";
 import { TrendLineChart, type TrendPoint } from "@/components/charts/trend-line-chart";
 
 export default async function BodyPage() {
   const userId = await requireUserId();
+  const todayUtc = toUtcDateOnly(new Date().toISOString().slice(0, 10));
 
-  const metrics = await prisma.bodyMetric.findMany({
-    where: { userId },
-    orderBy: { date: "desc" },
-    take: 90,
-  });
+  const [metrics, activeGoal, todayCalories] = await Promise.all([
+    prisma.bodyMetric.findMany({
+      where: { userId },
+      orderBy: { date: "desc" },
+      take: 90,
+    }),
+    prisma.weightGoal.findFirst({
+      where: { userId, status: "ACTIVE" },
+      select: { dailyCalorieTarget: true },
+    }),
+    prisma.foodEntry.aggregate({
+      where: { userId, date: todayUtc },
+      _sum: { calories: true },
+    }),
+  ]);
 
   const chronological = [...metrics].reverse();
   const chartData: TrendPoint[] = chronological.map((m) => ({
@@ -28,6 +40,11 @@ export default async function BodyPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">Body</h1>
+
+      <NutritionTeaserCard
+        caloriesToday={todayCalories._sum.calories ?? 0}
+        dailyCalorieTarget={activeGoal?.dailyCalorieTarget ?? null}
+      />
 
       <Card>
         <CardHeader className="flex flex-row items-baseline justify-between">
