@@ -7,7 +7,6 @@ import { FoodSearchPicker } from "@/components/nutrition/food-search-picker";
 import { FoodQuantityForm } from "@/components/nutrition/food-quantity-form";
 import { createSavedMeal, type CreateSavedMealInput } from "@/app/(app)/nutrition/actions";
 import { calculateNutrientsForEntry, UNIT_LABELS } from "@/lib/nutrition/units";
-import type { FoodSearchResult } from "@/lib/nutrition/open-food-facts";
 import type { FoodUnit } from "@/generated/prisma/enums";
 import type { SelectableFood } from "@/lib/nutrition/types";
 
@@ -33,20 +32,6 @@ export function CreateSavedMealForm({
   const [picking, setPicking] = useState<SelectableFood | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  function pickOffResult(result: FoodSearchResult) {
-    setPicking({
-      source: "off",
-      code: result.code,
-      name: result.name,
-      brand: result.brand,
-      basis: "PER_100G",
-      caloriesPerBasis: result.caloriesPer100g,
-      proteinPerBasis: result.proteinPer100g,
-      carbsPerBasis: result.carbsPer100g,
-      fatPerBasis: result.fatPer100g,
-    });
-  }
 
   function handleAddItem({ quantity, unit }: { quantity: number; unit: FoodUnit }) {
     if (!picking) return;
@@ -158,7 +143,7 @@ export function CreateSavedMealForm({
         </ul>
       )}
 
-      <FoodSearchPicker onPick={pickOffResult} />
+      <FoodSearchPicker onPick={setPicking} />
 
       {error && <p className="text-sm text-danger">{error}</p>}
 

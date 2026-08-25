@@ -161,21 +161,48 @@ test("today's diary groups entries by meal with per-meal subtotals, and delete w
   await expect(page.getByText("Test Banana")).not.toBeVisible();
 });
 
-test("food search surfaces a clean error when the food database is unreachable", async ({
+test("food search surfaces a clean error when nothing matches locally and online is unreachable", async ({
   page,
 }) => {
   await loginAsOwner(page);
   await page.goto("/nutrition");
 
   await page.getByRole("button", { name: "Add to Breakfast" }).click();
-  await page.fill("#foodSearch", "banana");
+  // A query with no match in the curated catalog, so this actually reaches
+  // (and fails against) Open Food Facts — this sandbox's network policy
+  // blocks it outright, so this assertion exercises the real failure path.
+  await page.fill("#foodSearch", "zzzznonexistentfood12345");
   await page.click('button:has-text("Search")');
 
-  // This sandbox's network policy blocks Open Food Facts outright, so this
-  // assertion is exercising the real failure path, not a simulated one.
   await expect(page.getByText("Couldn't reach the food database")).toBeVisible({
     timeout: 15_000,
   });
+});
+
+test("search finds a curated Brazilian food locally (no network needed) and one-tap logs its default serving", async ({
+  page,
+}) => {
+  await loginAsOwner(page);
+  await page.goto("/nutrition");
+
+  await page.getByRole("button", { name: "Add to Breakfast" }).click();
+  await page.fill("#foodSearch", "ovo frito");
+  await page.click('button:has-text("Search")');
+
+  await expect(page.getByText("Ovo frito")).toBeVisible();
+  await expect(page.getByText("92 cal, 1 un")).toBeVisible();
+
+  await page.getByRole("button", { name: "Log Ovo frito" }).click();
+
+  // Logging auto-collapses the quick-add panel; the new entry shows in the diary.
+  await expect(page.getByRole("button", { name: "Add to Breakfast" })).toBeVisible();
+  await expect(page.getByText("Ovo frito")).toBeVisible();
+  await expect(page.getByText(/1 un · 92 kcal/)).toBeVisible();
+
+  await db.query('DELETE FROM "FoodEntry" WHERE "userId" = $1 AND name = $2', [
+    ownerId,
+    "Ovo frito",
+  ]);
 });
 
 test("create a custom per-unit food and log it via the per-meal quick-add", async ({ page }) => {

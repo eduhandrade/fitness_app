@@ -273,6 +273,29 @@ model FoodEntry {
   @@index([userId, date])
 }
 
+/** A shared, curated food catalog (not per-user) — the app's own database,
+ * seeded with common Brazilian foods so search works instantly and doesn't
+ * depend on Open Food Facts being reachable. `defaultQuantity`/`defaultUnit`
+ * is the everyday serving (e.g. 1 UNIT for an egg, 100 GRAM for cooked
+ * rice) shown in search results and used for the one-tap "+" quick-add. */
+model Food {
+  id              String         @id @default(cuid())
+  name            String
+  searchName      String
+  brand           String?
+  basis           NutritionBasis
+  calories        Float
+  proteinG        Float
+  carbsG          Float
+  fatG            Float
+  defaultQuantity Float
+  defaultUnit     FoodUnit
+  createdAt       DateTime       @default(now())
+
+  @@unique([name])
+  @@index([searchName])
+}
+
 model CustomFood {
   id        String         @id @default(cuid())
   userId    String

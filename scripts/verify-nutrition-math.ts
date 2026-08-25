@@ -14,6 +14,7 @@ import {
   calculateNutrientsForEntry,
   resolveGrams,
 } from "../src/lib/nutrition/units";
+import { normalizeSearchText } from "../src/lib/nutrition/search-text";
 
 let failures = 0;
 
@@ -267,6 +268,19 @@ function assertClose(actual: number, expected: number, tolerance: number, label:
     0.01,
     "calculateNutrientsForEntry: PER_UNIT at quantity=1 passes perBasis through unchanged"
   );
+}
+
+// --- normalizeSearchText: accent-folding for the Food catalog's search ---
+{
+  assert(
+    normalizeSearchText("Café com Leite") === "cafe com leite",
+    "normalizeSearchText: strips accents and lowercases"
+  );
+  assert(
+    normalizeSearchText("Café") === normalizeSearchText("cafe"),
+    "normalizeSearchText: accented and unaccented queries match"
+  );
+  assert(normalizeSearchText("  Maçã  ") === "maca", "normalizeSearchText: trims and folds cedilla");
 }
 
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);

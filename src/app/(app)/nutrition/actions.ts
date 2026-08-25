@@ -13,6 +13,7 @@ import {
   MAX_WEEKLY_RATE_KG,
 } from "@/lib/nutrition/goal";
 import { calculateNutrientsForEntry } from "@/lib/nutrition/units";
+import { normalizeSearchText } from "@/lib/nutrition/search-text";
 import {
   searchFoods as searchOpenFoodFacts,
   type FoodSearchResult,
@@ -143,22 +144,67 @@ export async function endWeightGoal(id: string): Promise<void> {
   revalidatePath("/body");
 }
 
-export type SearchFoodsResult =
-  | { ok: true; results: FoodSearchResult[] }
-  | { ok: false; error: string };
+export type LocalFoodResult = {
+  id: string;
+  name: string;
+  brand: string | null;
+  basis: NutritionBasis;
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  defaultQuantity: number;
+  defaultUnit: FoodUnit;
+};
 
-/** Returns a result value rather than throwing — this Next.js version
- * strips thrown errors' messages down to a generic "Server Components
- * render" digest once built for production, so a friendly message here
- * would never actually reach the client outside of local dev. */
+export type SearchFoodsResult = {
+  local: LocalFoodResult[];
+  online: FoodSearchResult[];
+  onlineError: string | null;
+};
+
+/** Searches the app's own curated Food catalog first (fast, reliable, not
+ * dependent on any external network call) and Open Food Facts second, as a
+ * supplementary source. Returns a result value rather than throwing — this
+ * Next.js version strips a thrown error's message down to a generic "Server
+ * Components render" digest once built for production, so a friendly
+ * message here would never actually reach the client outside of local dev. */
 export async function searchFoods(query: string): Promise<SearchFoodsResult> {
   await requireUserId();
-  if (!query.trim()) return { ok: true, results: [] };
+  const trimmed = query.trim();
+  if (!trimmed) return { local: [], online: [], onlineError: null };
+
+  const searchName = normalizeSearchText(trimmed);
+  const local = await prisma.food.findMany({
+    where: { searchName: { contains: searchName } },
+    orderBy: { name: "asc" },
+    take: 20,
+  });
+
+  let online: FoodSearchResult[] = [];
+  let onlineError: string | null = null;
   try {
-    return { ok: true, results: await searchOpenFoodFacts(query) };
+    online = await searchOpenFoodFacts(trimmed);
   } catch {
-    return { ok: false, error: "Couldn't reach the food database — try again." };
+    onlineError = "Couldn't reach the food database — try again.";
   }
+
+  return {
+    local: local.map((food) => ({
+      id: food.id,
+      name: food.name,
+      brand: food.brand,
+      basis: food.basis,
+      calories: food.calories,
+      proteinG: food.proteinG,
+      carbsG: food.carbsG,
+      fatG: food.fatG,
+      defaultQuantity: food.defaultQuantity,
+      defaultUnit: food.defaultUnit,
+    })),
+    online,
+    onlineError,
+  };
 }
 
 const logFoodEntrySchema = z.object({

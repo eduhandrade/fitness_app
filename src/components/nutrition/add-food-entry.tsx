@@ -7,7 +7,6 @@ import { CustomFoodsPicker, type CustomFoodOption } from "@/components/nutrition
 import { RecentFoodsPanel, type RecentFoodOption } from "@/components/nutrition/recent-foods-panel";
 import { SavedMealsPanel, type SavedMealOption } from "@/components/nutrition/saved-meals-panel";
 import { logFoodEntry } from "@/app/(app)/nutrition/actions";
-import type { FoodSearchResult } from "@/lib/nutrition/open-food-facts";
 import type { FoodUnit, MealType } from "@/generated/prisma/enums";
 import type { SelectableFood } from "@/lib/nutrition/types";
 
@@ -46,20 +45,6 @@ export function AddFoodEntry({
   const [selected, setSelected] = useState<SelectableFood | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-
-  function pickOffResult(result: FoodSearchResult) {
-    setSelected({
-      source: "off",
-      code: result.code,
-      name: result.name,
-      brand: result.brand,
-      basis: "PER_100G",
-      caloriesPerBasis: result.caloriesPer100g,
-      proteinPerBasis: result.proteinPer100g,
-      carbsPerBasis: result.carbsPer100g,
-      fatPerBasis: result.fatPer100g,
-    });
-  }
 
   function pickCustomFood(food: CustomFoodOption) {
     setSelected({
@@ -146,7 +131,9 @@ export function AddFoodEntry({
         ))}
       </div>
 
-      {tab === "search" && <FoodSearchPicker onPick={pickOffResult} />}
+      {tab === "search" && (
+        <FoodSearchPicker meal={meal} date={date} onPick={setSelected} onLogged={onLogged} />
+      )}
       {tab === "recent" && (
         <RecentFoodsPanel items={recentFoods} meal={meal} date={date} onLogged={onLogged} />
       )}

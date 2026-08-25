@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma migrate deploy && next build",
+    "build": "prisma migrate deploy && tsx prisma/seed-foods.ts && next build",
     "start": "next start",
     "lint": "eslint",
+    "db:seed-foods": "tsx prisma/seed-foods.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
