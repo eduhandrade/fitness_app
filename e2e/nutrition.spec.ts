@@ -155,7 +155,17 @@ test("today's diary groups entries by meal with per-meal subtotals, and delete w
   await expect(page.getByText("Lunch")).toBeVisible();
   await expect(page.getByText("Test Banana")).toBeVisible();
   await expect(page.getByText("100 g · 89 kcal · TestBrand")).toBeVisible();
-  await expect(page.getByText("89 kcal", { exact: true })).toBeVisible(); // meal subtotal
+  await expect(page.getByText("P 1g · C 23g · G 0g")).toBeVisible();
+  // Meal subtotal — scoped with .last() since the "Today's food" header can
+  // coincidentally show the same "89 kcal" text when no goal is active
+  // (e.g. running this test in isolation, without the goal-creating test
+  // ahead of it in the file).
+  await expect(page.getByText("89 kcal", { exact: true }).last()).toBeVisible();
+
+  // Daily macro totals card (top of the diary) sums across all entries.
+  await expect(page.getByText("Carboidratos")).toBeVisible();
+  await expect(page.getByText("Proteínas")).toBeVisible();
+  await expect(page.getByText("Gorduras")).toBeVisible();
 
   await page.getByRole("button", { name: "Delete entry" }).click();
   await expect(page.getByText("Test Banana")).not.toBeVisible();

@@ -164,6 +164,9 @@ export default async function NutritionPage() {
               quantity: e.quantity,
               unit: e.unit,
               calories: e.calories,
+              proteinG: e.proteinG,
+              carbsG: e.carbsG,
+              fatG: e.fatG,
             }))}
             customFoods={customFoods}
             savedMeals={savedMealsForUi}

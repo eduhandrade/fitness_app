@@ -18,6 +18,9 @@ export type FoodEntryItem = {
   quantity: number;
   unit: FoodUnit;
   calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
 };
 
 const MEAL_ORDER: { value: MealType; label: string }[] = [
@@ -41,8 +44,29 @@ export function FoodDiary({
   const [isPending, startTransition] = useTransition();
   const [expandedMeal, setExpandedMeal] = useState<MealType | null>(null);
 
+  const totalCarbsG = entries.reduce((sum, e) => sum + e.carbsG, 0);
+  const totalProteinG = entries.reduce((sum, e) => sum + e.proteinG, 0);
+  const totalFatG = entries.reduce((sum, e) => sum + e.fatG, 0);
+
   return (
     <div className="space-y-4">
+      {entries.length > 0 && (
+        <div className="grid grid-cols-3 gap-2 rounded-xl border border-border p-3 text-center">
+          <div>
+            <p className="text-sm font-medium text-foreground">{Math.round(totalCarbsG)}g</p>
+            <p className="text-xs text-foreground-muted">Carboidratos</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">{Math.round(totalProteinG)}g</p>
+            <p className="text-xs text-foreground-muted">Proteínas</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">{Math.round(totalFatG)}g</p>
+            <p className="text-xs text-foreground-muted">Gorduras</p>
+          </div>
+        </div>
+      )}
+
       {MEAL_ORDER.map(({ value, label }) => {
         const items = entries.filter((e) => e.meal === value);
         const subtotal = items.reduce((sum, e) => sum + e.calories, 0);
@@ -96,6 +120,10 @@ export function FoodDiary({
                         {entry.quantity} {UNIT_LABELS[entry.unit]} ·{" "}
                         {Math.round(entry.calories)} kcal
                         {entry.brand ? ` · ${entry.brand}` : ""}
+                      </p>
+                      <p className="text-xs text-foreground-muted">
+                        P {Math.round(entry.proteinG)}g · C {Math.round(entry.carbsG)}g · G{" "}
+                        {Math.round(entry.fatG)}g
                       </p>
                     </div>
                     <button
