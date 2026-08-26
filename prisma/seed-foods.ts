@@ -47,9 +47,11 @@ const G = (
   proteinG: number,
   carbsG: number,
   fatG: number,
-  defaultQuantity = 100
+  defaultQuantity = 100,
+  brand?: string
 ): SeedFood => ({
   name,
+  brand,
   basis: "PER_100G",
   calories,
   proteinG,
@@ -143,6 +145,7 @@ const FOODS: SeedFood[] = [
   G("Leite integral", 61, 3.2, 4.5, 3.3, 200),
   G("Leite desnatado", 35, 3.4, 5, 0.2, 200),
   G("Iogurte natural", 61, 3.5, 4.7, 3.3, 170),
+  G("Iogurte natural desnatado (Itambé, pote 170g)", 39, 4.1, 5.8, 0.1, 170, "Itambé"),
   G("Iogurte grego", 97, 9, 3.6, 5, 100),
   U("Fatia de queijo mussarela", 85, 6.2, 0.6, 6.5),
   U("Fatia de queijo prato", 85, 5.6, 0.5, 6.9),
