@@ -237,6 +237,7 @@ const FOODS: SeedFood[] = [
   G("Contrafilé grelhado", 195, 29, 0, 8, 120),
   G("Lombo suíno assado", 210, 27, 0, 11, 120),
   G("Costelinha suína assada", 280, 22, 0, 21, 120),
+  G("Costela de porco sem gordura", 178, 26, 0, 7.5, 120),
   G("Coração de frango grelhado", 219, 21, 0.1, 14.5, 80),
   G("Fígado bovino grelhado", 175, 26, 3.9, 4.9, 100),
   G("Carne seca (charque) cozida", 240, 33, 0, 11, 80),
