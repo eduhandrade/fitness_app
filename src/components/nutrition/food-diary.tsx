@@ -50,22 +50,20 @@ export function FoodDiary({
 
   return (
     <div className="space-y-4">
-      {entries.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 rounded-xl border border-border p-3 text-center">
-          <div>
-            <p className="text-sm font-medium text-foreground">{Math.round(totalCarbsG)}g</p>
-            <p className="text-xs text-foreground-muted">Carboidratos</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">{Math.round(totalProteinG)}g</p>
-            <p className="text-xs text-foreground-muted">Proteínas</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">{Math.round(totalFatG)}g</p>
-            <p className="text-xs text-foreground-muted">Gorduras</p>
-          </div>
+      <div className="grid grid-cols-3 gap-2 rounded-xl border border-border p-3 text-center">
+        <div>
+          <p className="text-sm font-medium text-foreground">{Math.round(totalCarbsG)}g</p>
+          <p className="text-xs text-foreground-muted">Carboidratos</p>
         </div>
-      )}
+        <div>
+          <p className="text-sm font-medium text-foreground">{Math.round(totalProteinG)}g</p>
+          <p className="text-xs text-foreground-muted">Proteínas</p>
+        </div>
+        <div>
+          <p className="text-sm font-medium text-foreground">{Math.round(totalFatG)}g</p>
+          <p className="text-xs text-foreground-muted">Gorduras</p>
+        </div>
+      </div>
 
       {MEAL_ORDER.map(({ value, label }) => {
         const items = entries.filter((e) => e.meal === value);
