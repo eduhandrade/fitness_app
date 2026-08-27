@@ -4,6 +4,7 @@
 import { ageFromDateOfBirth, calculateBmr, calculateTdee } from "../src/lib/nutrition/bmr";
 import {
   calculateDailyCalorieTarget,
+  calculateMacroTargets,
   calculateTargetDate,
   dailyDeficitFromWeeklyRate,
   plannedWeightOnDate,
@@ -281,6 +282,28 @@ function assertClose(actual: number, expected: number, tolerance: number, label:
     "normalizeSearchText: accented and unaccented queries match"
   );
   assert(normalizeSearchText("  Maçã  ") === "maca", "normalizeSearchText: trims and folds cedilla");
+}
+
+// --- calculateMacroTargets: protein/fat per kg, carbs fill the rest ---
+{
+  // 80kg, 2000 kcal target: protein 1.8*80=144g (576kcal), fat 0.8*80=64g
+  // (576kcal), carbs get the remaining 848kcal / 4 = 212g. All three sum
+  // back to exactly the calorie target.
+  const targets = calculateMacroTargets({ dailyCalorieTarget: 2000, weightKg: 80 });
+  assert(targets.proteinG === 144, "calculateMacroTargets: protein = 1.8g/kg");
+  assert(targets.fatG === 64, "calculateMacroTargets: fat = 0.8g/kg");
+  assert(targets.carbsG === 212, "calculateMacroTargets: carbs fill the remaining calories");
+  const impliedCalories = targets.proteinG * 4 + targets.carbsG * 4 + targets.fatG * 9;
+  assert(
+    impliedCalories === 2000,
+    "calculateMacroTargets: protein+carbs+fat calories sum back to the daily target"
+  );
+
+  // A high bodyweight combined with a floor-clamped low calorie target can
+  // make protein+fat alone exceed the whole budget — carbs clamp to zero
+  // rather than going negative.
+  const clamped = calculateMacroTargets({ dailyCalorieTarget: 1200, weightKg: 120 });
+  assert(clamped.carbsG === 0, "calculateMacroTargets: carbs clamp to 0, never negative");
 }
 
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) failed.`);

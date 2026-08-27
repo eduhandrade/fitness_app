@@ -37,6 +37,46 @@ export function calculateDailyCalorieTarget(params: {
   return Math.round(Math.max(target, floor));
 }
 
+/** Protein set within the 1.6–2.2 g/kg range the ISSN recommends for
+ * athletes in a calorie deficit (to preserve lean mass under a shortfall);
+ * fat set at a floor for hormonal/essential-fatty-acid needs. Carbs fill
+ * whatever calories remain — appropriate here since this app's users are
+ * training athletes for whom carb availability matters for performance,
+ * not just a number to minimize. */
+const PROTEIN_G_PER_KG = 1.8;
+const FAT_G_PER_KG = 0.8;
+const KCAL_PER_G_PROTEIN = 4;
+const KCAL_PER_G_CARB = 4;
+const KCAL_PER_G_FAT = 9;
+
+export type MacroTargets = {
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+};
+
+/** Daily macro targets to pair with `calculateDailyCalorieTarget`. Protein
+ * and fat are set per kg of bodyweight; carbs are whatever's left of the
+ * calorie target once protein and fat are accounted for, so the three
+ * always sum to the daily calorie target exactly. Clamped to zero rather
+ * than negative carbs, for the edge case of a high bodyweight combined
+ * with a very low (floor-clamped) calorie target. */
+export function calculateMacroTargets(params: {
+  dailyCalorieTarget: number;
+  weightKg: number;
+}): MacroTargets {
+  const proteinG = Math.round(PROTEIN_G_PER_KG * params.weightKg);
+  const fatG = Math.round(FAT_G_PER_KG * params.weightKg);
+  const proteinCalories = proteinG * KCAL_PER_G_PROTEIN;
+  const fatCalories = fatG * KCAL_PER_G_FAT;
+  const remainingCalories = Math.max(
+    0,
+    params.dailyCalorieTarget - proteinCalories - fatCalories
+  );
+  const carbsG = Math.round(remainingCalories / KCAL_PER_G_CARB);
+  return { proteinG, carbsG, fatG };
+}
+
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /** The date a goal is projected to be reached at the requested weekly rate,

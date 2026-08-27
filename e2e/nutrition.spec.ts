@@ -126,6 +126,47 @@ test("create a weight goal and see the progress chart + daily target", async ({ 
   expect(rows[0].dailyCalorieTarget).toBeGreaterThan(0);
 });
 
+test("macro targets appear once a goal is set: protein/fat per kg bodyweight, carbs fill the rest", async ({
+  page,
+}) => {
+  // Ensure no active goal exists yet, so the goal-creation form renders
+  // regardless of whether an earlier test in this file already created one
+  // (the page shows the progress view instead of the form once a goal is
+  // active).
+  await db.query('UPDATE "WeightGoal" SET status = $1 WHERE "userId" = $2 AND status = $3', [
+    "ARCHIVED",
+    ownerId,
+    "ACTIVE",
+  ]);
+
+  await loginAsOwner(page);
+  await page.goto("/nutrition");
+
+  await page.fill("#goalWeightKg", "75");
+  await page.fill("#weeklyRateMagnitude", "0.3");
+  await page.click('button:has-text("Set goal")');
+
+  // Wait for the UI to confirm the goal actually landed before querying the
+  // DB — otherwise this races ahead of the server action's insert.
+  await expect(page.getByText("75 kg")).toBeVisible();
+
+  const { rows } = await db.query(
+    'SELECT "dailyCalorieTarget" FROM "WeightGoal" WHERE "userId" = $1 AND status = $2',
+    [ownerId, "ACTIVE"]
+  );
+  const dailyCalorieTarget = rows[0].dailyCalorieTarget as number;
+
+  // Mirrors calculateMacroTargets in src/lib/nutrition/goal.ts, against the
+  // owner fixture's seeded bodyweight (FIXTURE_WEIGHT_KG).
+  const proteinG = Math.round(1.8 * FIXTURE_WEIGHT_KG);
+  const fatG = Math.round(0.8 * FIXTURE_WEIGHT_KG);
+  const carbsG = Math.round(Math.max(0, dailyCalorieTarget - proteinG * 4 - fatG * 9) / 4);
+
+  await expect(page.getByText(`/ ${proteinG}g`)).toBeVisible();
+  await expect(page.getByText(`/ ${carbsG}g`)).toBeVisible();
+  await expect(page.getByText(`/ ${fatG}g`)).toBeVisible();
+});
+
 // The actual search UI calls Open Food Facts from the *server* (a Server
 // Action's own fetch), which page.route() cannot intercept — that only
 // mocks browser-initiated requests. This sandbox's outbound proxy also

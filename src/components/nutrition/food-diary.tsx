@@ -8,6 +8,7 @@ import { AddFoodEntry } from "@/components/nutrition/add-food-entry";
 import type { CustomFoodOption } from "@/components/nutrition/custom-foods-picker";
 import type { SavedMealOption } from "@/components/nutrition/saved-meals-panel";
 import type { RecentFoodOption } from "@/components/nutrition/recent-foods-panel";
+import type { MacroTargets } from "@/lib/nutrition/goal";
 import type { FoodUnit, MealType } from "@/generated/prisma/enums";
 
 export type FoodEntryItem = {
@@ -35,11 +36,13 @@ export function FoodDiary({
   customFoods,
   savedMeals,
   recentByMeal,
+  macroTargets,
 }: {
   entries: FoodEntryItem[];
   customFoods: CustomFoodOption[];
   savedMeals: SavedMealOption[];
   recentByMeal: Record<MealType, RecentFoodOption[]>;
+  macroTargets: MacroTargets | null;
 }) {
   const [isPending, startTransition] = useTransition();
   const [expandedMeal, setExpandedMeal] = useState<MealType | null>(null);
@@ -52,15 +55,24 @@ export function FoodDiary({
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-2 rounded-xl border border-border p-3 text-center">
         <div>
-          <p className="text-sm font-medium text-foreground">{Math.round(totalCarbsG)}g</p>
+          <p className="text-sm font-medium text-foreground">
+            {Math.round(totalCarbsG)}
+            {macroTargets ? ` / ${macroTargets.carbsG}` : ""}g
+          </p>
           <p className="text-xs text-foreground-muted">Carboidratos</p>
         </div>
         <div>
-          <p className="text-sm font-medium text-foreground">{Math.round(totalProteinG)}g</p>
+          <p className="text-sm font-medium text-foreground">
+            {Math.round(totalProteinG)}
+            {macroTargets ? ` / ${macroTargets.proteinG}` : ""}g
+          </p>
           <p className="text-xs text-foreground-muted">Proteínas</p>
         </div>
         <div>
-          <p className="text-sm font-medium text-foreground">{Math.round(totalFatG)}g</p>
+          <p className="text-sm font-medium text-foreground">
+            {Math.round(totalFatG)}
+            {macroTargets ? ` / ${macroTargets.fatG}` : ""}g
+          </p>
           <p className="text-xs text-foreground-muted">Gorduras</p>
         </div>
       </div>

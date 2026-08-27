@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { formatUtcDate, toUtcDateOnly } from "@/lib/date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { plannedWeightOnDate } from "@/lib/nutrition/goal";
+import { calculateMacroTargets, plannedWeightOnDate, type MacroTargets } from "@/lib/nutrition/goal";
 import { WeightGoalForm } from "@/components/nutrition/weight-goal-form";
 import { WeightGoalProgress } from "@/components/nutrition/weight-goal-progress";
 import { NutritionProfileForm } from "@/components/nutrition/nutrition-profile-form";
@@ -72,6 +72,7 @@ export default async function NutritionPage() {
 
   const chartData: DualTrendPoint[] = [];
   let remainingKg = 0;
+  let macroTargets: MacroTargets | null = null;
   if (goal) {
     const bodyMetrics = await prisma.bodyMetric.findMany({
       where: { userId, date: { gte: goal.startDate } },
@@ -105,6 +106,10 @@ export default async function NutritionPage() {
 
     const latestWeight = bodyMetrics[bodyMetrics.length - 1]?.weightKg ?? goal.startWeightKg;
     remainingKg = goal.goalWeightKg - latestWeight;
+    macroTargets = calculateMacroTargets({
+      dailyCalorieTarget: goal.dailyCalorieTarget,
+      weightKg: latestWeight,
+    });
   }
 
   return (
@@ -171,6 +176,7 @@ export default async function NutritionPage() {
             customFoods={customFoods}
             savedMeals={savedMealsForUi}
             recentByMeal={recentByMeal}
+            macroTargets={macroTargets}
           />
         </CardContent>
       </Card>
